@@ -1,0 +1,13 @@
+# Laravel / Backend
+backend/.env
+backend/vendor/
+backend/database/database.sqlite
+backend/storage/logs/*.log
+
+# Frontend
+Frontend/node_modules/
+Frontend/dist/
+
+# System-Dateien
+.DS_Store
+Thumbs.db
