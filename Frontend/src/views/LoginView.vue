@@ -1,6 +1,7 @@
 <template>
   <div class="min-h-screen bg-background flex items-center justify-center p-4">
     <div class="w-full max-w-md">
+      <!--
       <div class="text-center mb-8">
         <RouterLink to="/">
           <span class="text-3xl font-black">
@@ -8,9 +9,14 @@
           </span>
         </RouterLink>
       </div>
+       -->
 
       <div class="rounded-xl border border-border bg-card p-8 shadow-sm">
         <div class="text-center mb-6">
+          <RouterLink to="/">
+          <!-- Logo -->
+          <WGLogo :width="100" :height="100" margin="auto auto 25px auto" display="block"/>
+          </RouterLink>
           <h1 class="text-2xl font-bold">Willkommen zurück</h1>
           <p class="text-muted-foreground mt-1">Melde dich an, um deine WG zu verwalten</p>
         </div>
@@ -51,6 +57,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
+import WGLogo from '@/components/WGifyLogo.vue'
 
 const router = useRouter()
 const email = ref('')

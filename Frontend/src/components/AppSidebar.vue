@@ -25,9 +25,15 @@
     <div class="flex h-full flex-col">
       <!-- Logo -->
       <div class="flex h-16 items-center gap-2 px-6 border-b border-sidebar-border">
+        <!-- Logo in Sidebar -->
+        <div class="logo-wrapper">
+          <img src="/logo.png" alt="WGify Logo"/>
+        </div>
+        <!--
         <span class="text-2xl font-black text-white">
           <span class="text-sidebar-primary">WG</span>ify
         </span>
+        -->
       </div>
 
       <!-- Navigation -->
@@ -69,6 +75,18 @@
     </div>
   </aside>
 </template>
+
+<!-- Logo Style in Sidebar -->
+<style scoped>
+.logo-wrapper {
+  background-color: #ffffff;
+  padding: 3px;
+  border-radius: 12px;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+}
+</style>
 
 <script setup lang="ts">
 import { ref } from 'vue'

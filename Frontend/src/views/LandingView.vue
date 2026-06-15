@@ -3,9 +3,13 @@
     <!-- Header -->
     <header class="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
       <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+        <!-- Logo -->
+        <WGLogo :width="50" :height="50" margin="0"/>
+        <!--
         <span class="text-xl font-black">
           <span class="text-primary">WG</span><span class="text-purple">ify</span>
         </span>
+        -->
         <div class="flex items-center gap-3">
           <RouterLink to="/login">
             <button class="px-4 py-2 rounded-md text-sm font-medium hover:bg-accent transition-colors">Anmelden</button>
@@ -85,9 +89,14 @@
       <div class="container mx-auto px-4">
         <div class="grid md:grid-cols-2 gap-12 items-center">
           <div>
+            <!-- Logo 
+            <WGLogo :width="100" :height="100" margin="0" display="block"/>
+            -->
+            
             <h2 class="text-3xl font-bold mb-6">
               Warum <span class="text-primary">WG</span><span class="text-purple">ify</span>?
             </h2>
+            
             <ul class="space-y-4">
               <li v-for="benefit in benefits" :key="benefit.title" class="flex items-start gap-3">
                 <CheckCircle class="h-6 w-6 text-accent flex-shrink-0 mt-0.5" />
@@ -134,9 +143,13 @@
     <!-- Footer -->
     <footer class="border-t border-border py-8 bg-card">
       <div class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+        <!-- Logo -->
+        <WGLogo :width="70" :height="70" margin="0"/>
+        <!--
         <span class="text-lg font-black">
           <span class="text-primary">WG</span><span class="text-purple">ify</span>
         </span>
+        -->
         <p class="text-sm text-muted-foreground">2024 WGify. Alle Rechte vorbehalten.</p>
       </div>
     </footer>
@@ -146,6 +159,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import { ArrowRight, Sparkles, Receipt, ListTodo, Users, CheckCircle } from 'lucide-vue-next'
+import WGLogo from '@/components/WGifyLogo.vue'
 
 const benefits = [
   { title: 'Einfach zu bedienen', desc: 'Intuitive Oberfläche, keine Einarbeitung nötig.' },
