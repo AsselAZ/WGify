@@ -16,7 +16,7 @@
       <button class="relative flex items-center justify-center w-9 h-9 rounded-md hover:bg-accent transition-colors">
         <Bell class="h-5 w-5" />
         <span class="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
-          3
+
         </span>
       </button>
     </div>
