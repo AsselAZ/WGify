@@ -44,7 +44,7 @@
               Kostenlos starten <ArrowRight class="h-4 w-4" />
             </button>
           </RouterLink>
-          <button class="px-6 py-3 rounded-md border border-border font-medium hover:bg-muted transition-colors">
+          <button class="px-6 py-3 rounded-md border border-border font-medium hover:bg-muted transition-colors" @click="scrollToSection">
             Mehr erfahren
           </button>
         </div>
@@ -85,7 +85,7 @@
     </section>
 
     <!-- Benefits -->
-    <section class="py-20 border-t border-border">
+    <section class="py-50 border-t border-border" id="MehrErfahrenZiel">
       <div class="container mx-auto px-4">
         <div class="grid md:grid-cols-2 gap-12 items-center">
           <div>
@@ -173,4 +173,11 @@ const previewItems = [
   { bg: 'bg-accent/40', avatar: 'M', avatarBg: 'bg-accent text-accent-foreground', name: 'Max', desc: 'Strom bezahlt', amount: '85,50 EUR' },
   { bg: 'bg-purple/20', avatar: 'L', avatarBg: 'bg-purple text-purple-foreground', name: 'Lisa', desc: 'Einkauf', amount: '67,30 EUR' },
 ]
+
+const scrollToSection = () => {
+  document.getElementById('MehrErfahrenZiel')?.scrollIntoView({
+    behavior: 'smooth'
+  })
+}
+
 </script>
