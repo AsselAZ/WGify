@@ -21,6 +21,9 @@
       <div>
         <div class="text-center mb-6 md:hidden">
           <RouterLink to="/">
+            <!-- Logo 
+            <WGLogo :width="100" :height="100" margin="0" display="block"/>
+            -->
             <span class="text-3xl font-black">
               <span class="text-primary">WG</span><span class="text-purple">ify</span>
             </span>
@@ -30,9 +33,13 @@
         <div class="rounded-xl border border-border bg-card p-8 shadow-sm">
           <div class="text-center mb-6">
             <div class="hidden md:block mb-4">
+              <!-- Logo -->
+              <WGLogo :width="100" :height="100" margin="auto" display="block"/>
+              <!--
               <span class="text-2xl font-black">
                 <span class="text-primary">WG</span><span class="text-purple">ify</span>
               </span>
+              -->
             </div>
             <h2 class="text-2xl font-bold">Konto erstellen</h2>
             <p class="text-muted-foreground mt-1">Erstelle ein kostenloses Konto</p>
@@ -83,6 +90,7 @@
 import { ref, reactive } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { CheckCircle } from 'lucide-vue-next'
+import WGLogo from '@/components/WGifyLogo.vue'
 
 const router = useRouter()
 const isLoading = ref(false)
