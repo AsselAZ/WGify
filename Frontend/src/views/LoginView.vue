@@ -35,6 +35,9 @@
             <input v-model="password" type="password" placeholder="Dein Passwort" required
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring" />
           </div>
+	  <p v-if="errorMessage" class="text-sm text-red-500">
+  		{{ errorMessage }}
+	  </p>
           <button type="submit" :disabled="isLoading"
             class="w-full px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-60">
             {{ isLoading ? 'Wird angemeldet...' : 'Anmelden' }}
@@ -58,15 +61,30 @@
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import WGLogo from '@/components/WGifyLogo.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
+
 const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
+const errorMessage = ref('')
 
 async function handleSubmit() {
   isLoading.value = true
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  router.push('/app/dashboard')
+  errorMessage.value = ''
+
+  await new Promise(resolve => setTimeout(resolve, 500))
+
+  const success = authStore.login(email.value)
+
+  if (success) {
+    router.push('/app/dashboard')
+  } else {
+    errorMessage.value = 'Diese E-Mail ist nicht registriert.'
+  }
+
+  isLoading.value = false
 }
 </script>

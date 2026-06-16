@@ -25,15 +25,9 @@
     <div class="flex h-full flex-col">
       <!-- Logo -->
       <div class="flex h-16 items-center gap-2 px-6 border-b border-sidebar-border">
-        <!-- Logo in Sidebar -->
         <div class="logo-wrapper">
-          <img src="/logo.png" alt="WGify Logo"/>
+          <img src="/logo.png" alt="WGify Logo" />
         </div>
-        <!--
-        <span class="text-2xl font-black text-white">
-          <span class="text-sidebar-primary">WG</span>ify
-        </span>
-        -->
       </div>
 
       <!-- Navigation -->
@@ -58,18 +52,27 @@
       <!-- Footer -->
       <div class="border-t border-sidebar-border p-4">
         <div class="flex items-center gap-3">
-          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-purple text-purple-foreground text-sm font-medium">
-            A
+          <div
+            class="flex h-9 w-9 items-center justify-center rounded-full bg-purple text-purple-foreground text-sm font-medium"
+          >
+            {{ currentUserAvatar }}
           </div>
+
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-sidebar-foreground truncate">Assel</p>
-            <p class="text-xs text-sidebar-foreground/60 truncate">Admin</p>
+            <p class="text-sm font-medium text-sidebar-foreground truncate">
+              {{ currentUserName }}
+            </p>
+            <p class="text-xs text-sidebar-foreground/60 truncate">
+              {{ currentUserRole }}
+            </p>
           </div>
-          <RouterLink to="/">
-            <button class="flex items-center justify-center w-9 h-9 rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
-              <LogOut class="h-4 w-4" />
-            </button>
-          </RouterLink>
+
+          <button
+            class="flex items-center justify-center w-9 h-9 rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+            @click="handleLogout"
+          >
+            <LogOut class="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>
@@ -88,12 +91,41 @@
 </style>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
-import { LayoutDashboard, Receipt, ListTodo, Users, Settings, Menu, X, LogOut } from 'lucide-vue-next'
+import { computed, onMounted, ref } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import {
+  LayoutDashboard,
+  Receipt,
+  ListTodo,
+  Users,
+  Settings,
+  Menu,
+  X,
+  LogOut,
+} from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
+
 const mobileOpen = ref(false)
+
+onMounted(() => {
+  authStore.loadUser()
+})
+
+const currentUserName = computed(() => authStore.currentUser?.name ?? 'Gast')
+const currentUserAvatar = computed(() => authStore.currentUser?.avatar ?? 'G')
+
+const currentUserRole = computed(() =>
+  authStore.currentUser?.role === 'admin' ? 'Admin' : 'Mitglied'
+)
+
+function handleLogout() {
+  authStore.logout()
+  router.push('/')
+}
 
 const navigation = [
   { name: 'Dashboard', href: '/app/dashboard', icon: LayoutDashboard },

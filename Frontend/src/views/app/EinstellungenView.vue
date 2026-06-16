@@ -16,7 +16,9 @@
         </div>
         <div class="space-y-4">
           <div class="flex items-center gap-4">
-            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground text-2xl font-semibold">A</div>
+            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground text-2xl font-semibold">
+  {{ profile.avatar }}
+</div>
             <button class="px-4 py-2 rounded-md border border-border text-sm font-medium hover:bg-muted transition-colors">Bild ändern</button>
           </div>
           <div class="grid gap-4 sm:grid-cols-2">
@@ -132,17 +134,46 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { onMounted, reactive } from 'vue'
 import { User, Lock, Home, Bell, Save } from 'lucide-vue-next'
 import AppNavbar from '@/components/AppNavbar.vue'
+import { useAuthStore } from '@/stores/auth'
 
-const profile = reactive({ name: 'Assel', email: 'assel@wgify.de' })
-const wg = reactive({ name: 'Muster-WG', address: 'Musterstrasse 123, 12345 Berlin', currency: 'EUR' })
-const notifs = reactive({ email: true, push: false, tasks: true, expenses: true })
+const authStore = useAuthStore()
+
+const profile = reactive({
+  name: '',
+  email: '',
+  avatar: '',
+})
+
+const wg = reactive({
+  name: 'Muster-WG',
+  address: 'Musterstrasse 123, 12345 Berlin',
+  currency: 'EUR',
+})
+
+const notifs = reactive({
+  email: true,
+  push: false,
+  tasks: true,
+  expenses: true,
+})
+
 const notifItems = [
   { key: 'email' as const, label: 'E-Mail Benachrichtigungen', desc: 'Erhalte Updates per E-Mail' },
   { key: 'push' as const, label: 'Push Benachrichtigungen', desc: 'Browser Push-Nachrichten' },
   { key: 'tasks' as const, label: 'Aufgaben-Erinnerungen', desc: 'Erinnerungen für anstehende Aufgaben' },
   { key: 'expenses' as const, label: 'Ausgaben-Updates', desc: 'Benachrichtigungen bei neuen Ausgaben' },
 ]
+
+onMounted(() => {
+  authStore.loadUser()
+
+  if (authStore.currentUser) {
+    profile.name = authStore.currentUser.name
+    profile.email = authStore.currentUser.email
+    profile.avatar = authStore.currentUser.avatar
+  }
+})
 </script>
