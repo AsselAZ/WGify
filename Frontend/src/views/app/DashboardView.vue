@@ -1,6 +1,10 @@
 <template>
   <div class="min-h-screen">
-    <AppNavbar title="Dashboard" :subtitle="welcomeSubtitle" />
+    <AppNavbar
+      title="Dashboard"
+      :subtitle="welcomeSubtitle"
+      v-model:search="searchQuery"
+    />
 
     <div class="p-4 md:p-6 space-y-6">
       <!-- Stats -->
@@ -35,7 +39,7 @@
 
         <DashboardCard
           title="Pro Person"
-          :value="`${(total() / membersStore.members.length).toFixed(2)} EUR`"
+          :value="`${avgPerPerson.toFixed(2)} EUR`"
           subtitle="Durchschnitt"
           :icon="TrendingUp"
           :trend="{ value: 5, positive: true }"
@@ -51,7 +55,7 @@
 
           <div class="space-y-3">
             <div
-              v-for="(expense, index) in expensesStore.expenses.slice(0, 5)"
+              v-for="(expense, index) in filteredExpenses.slice(0, 5)"
               :key="expense.id"
               :class="[
                 'flex items-center justify-between rounded-lg px-4 py-3',
@@ -71,6 +75,13 @@
 
               <p class="font-semibold">{{ expense.amount.toFixed(2) }} EUR</p>
             </div>
+
+            <p
+              v-if="filteredExpenses.length === 0"
+              class="text-sm text-muted-foreground"
+            >
+              Keine passenden Ausgaben gefunden.
+            </p>
           </div>
         </div>
 
@@ -97,6 +108,13 @@
                 Offen
               </span>
             </div>
+
+            <p
+              v-if="openTasks.length === 0"
+              class="text-sm text-muted-foreground"
+            >
+              Keine passenden offenen Aufgaben gefunden.
+            </p>
           </div>
         </div>
       </div>
@@ -105,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Receipt, ListTodo, Users, TrendingUp } from 'lucide-vue-next'
 import AppNavbar from '@/components/AppNavbar.vue'
 import DashboardCard from '@/components/DashboardCard.vue'
@@ -119,12 +137,15 @@ const tasksStore = useTasksStore()
 const membersStore = useMembersStore()
 const authStore = useAuthStore()
 
+const searchQuery = ref('')
+
 const { total } = expensesStore
 
 onMounted(() => {
   authStore.loadUser()
   expensesStore.loadExpenses()
   tasksStore.loadTasks()
+  membersStore.loadMembers()
 })
 
 const welcomeSubtitle = computed(() => {
@@ -132,9 +153,52 @@ const welcomeSubtitle = computed(() => {
   return `Willkommen zurück, ${name}!`
 })
 
-const openTasks = computed(() => tasksStore.tasks.filter(t => t.status === 'offen'))
+const avgPerPerson = computed(() =>
+  membersStore.members.length > 0
+    ? total() / membersStore.members.length
+    : 0
+)
+
+const filteredExpenses = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+
+  if (!query) {
+    return expensesStore.expenses
+  }
+
+  return expensesStore.expenses.filter(expense =>
+    expense.title.toLowerCase().includes(query) ||
+    expense.category.toLowerCase().includes(query) ||
+    expense.paidBy.toLowerCase().includes(query) ||
+    expense.date.toLowerCase().includes(query) ||
+    String(expense.amount).includes(query)
+  )
+})
+
+const filteredTasks = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+
+  if (!query) {
+    return tasksStore.tasks
+  }
+
+  return tasksStore.tasks.filter(task =>
+    task.title.toLowerCase().includes(query) ||
+    task.assignedTo.toLowerCase().includes(query) ||
+    task.dueDate.toLowerCase().includes(query) ||
+    task.status.toLowerCase().includes(query)
+  )
+})
+
+const openTasks = computed(() =>
+  filteredTasks.value.filter(task => task.status === 'offen')
+)
+
 const openTasksCount = computed(() => openTasks.value.length)
-const completedTasksCount = computed(() => tasksStore.tasks.filter(t => t.status === 'erledigt').length)
+
+const completedTasksCount = computed(() =>
+  filteredTasks.value.filter(task => task.status === 'erledigt').length
+)
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString('de-DE')

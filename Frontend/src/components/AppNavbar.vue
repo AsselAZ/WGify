@@ -6,18 +6,20 @@
     </div>
 
     <div class="flex items-center gap-2 md:gap-4">
-      <div class="hidden md:flex relative">
+      <div v-if="showSearch" class="hidden md:flex relative">
         <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
         <input
+          :value="search"
           placeholder="Suchen..."
           class="w-64 pl-9 pr-3 h-9 rounded-md bg-secondary border-0 text-sm outline-none focus:ring-2 focus:ring-ring"
+          @input="emit('update:search', ($event.target as HTMLInputElement).value)"
         />
       </div>
+
       <button class="relative flex items-center justify-center w-9 h-9 rounded-md hover:bg-accent transition-colors">
         <Bell class="h-5 w-5" />
-        <span class="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
-
-        </span>
+        <span class="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center" />
       </button>
     </div>
   </header>
@@ -26,8 +28,20 @@
 <script setup lang="ts">
 import { Search, Bell } from 'lucide-vue-next'
 
-defineProps<{
-  title: string
-  subtitle?: string
+withDefaults(
+  defineProps<{
+    title: string
+    subtitle?: string
+    showSearch?: boolean
+    search?: string
+  }>(),
+  {
+    showSearch: true,
+    search: '',
+  }
+)
+
+const emit = defineEmits<{
+  'update:search': [value: string]
 }>()
 </script>

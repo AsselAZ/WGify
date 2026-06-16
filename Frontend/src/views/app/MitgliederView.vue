@@ -1,6 +1,10 @@
 <template>
   <div class="min-h-screen">
-    <AppNavbar title="Mitglieder" subtitle="Verwalte deine WG-Mitglieder" />
+    <AppNavbar
+  	title="Mitglieder"
+  	subtitle="Verwalte deine WG-Mitglieder"
+  	:show-search="false"
+     />
     <div class="p-4 md:p-6 space-y-6">
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <DashboardCard title="Mitglieder" :value="store.members.length" subtitle="In der WG" :icon="Users" />
