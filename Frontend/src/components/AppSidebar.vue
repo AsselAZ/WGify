@@ -1,76 +1,33 @@
 <template>
-
-
-  <!-- Mobile menu button -->
-   //flase <-> true beim klick
   <button
     class="fixed top-4 left-4 z-50 md:hidden flex items-center justify-center w-9 h-9 rounded-md hover:bg-gray-100 text-foreground"
     @click="mobileOpen = !mobileOpen"
   >
-  // Wenn die Sidebar offen ist (true), wird ein X angezeigt.
-  //(false), wird das Hamburger-Menü angezeigt.
     <X v-if="mobileOpen" class="w-5 h-5" />
     <Menu v-else class="w-5 h-5" />
   </button>
 
-  
-  <!-- Mobile overlay -->
-   //Wenn die Sidebar geöffnet ist, erscheint ein dunkler Hintergrund hinter der Sidebar.
-   //beim klicken auf ddie hintergrund Die Sidebar schließt sich wieder.
   <div
     v-if="mobileOpen"
     class="fixed inset-0 z-30 bg-black/50 md:hidden"
     @click="mobileOpen = false"
   />
 
-
-  <!-- Sidebar -->
-
-  //ob sidebar sichtbar oder  nicht 
   <aside
     :class="[
-    //fest und links
       'fixed inset-y-0 left-0 z-40 w-64 bg-sidebar border-r border-sidebar-border transform transition-transform duration-200 ease-in-out md:translate-x-0',
-     // Wenn mobileOpen true ist, wird die Sidebar sichtbar (translate-x-0),
-     //  andernfalls wird sie außerhalb des Bildschirms positioniert (-translate-x-full).    
       mobileOpen ? 'translate-x-0' : '-translate-x-full'
     ]"
   >
-    // Flex-Container für den kompletten Sidebar-Inhalt.
-  // Elemente werden vertikal angeordnet.
     <div class="flex h-full flex-col">
-      <!-- Logo -->
       <div class="flex h-16 items-center gap-2 px-6 border-b border-sidebar-border">
-              // Container für das Logo.
         <div class="logo-wrapper">
-
-        // Zeigt das WGify-Logo an.
           <img src="/logo.png" alt="WGify Logo" />
         </div>
       </div>
 
-      <!-- Navigation -->
       <nav class="flex-1 space-y-1 px-3 py-4">
-        
-
-    // Erstellt automatisch einen Link für jeden Eintrag
-        // aus dem navigation-Array.
-        v-for="item in navigation"
-
-        // Eindeutiger Schlüssel für Vue.
-        :key="item.name"
-
-        // Zielroute des Menüpunktes.
-        :to="item.href"
-
-        // Schließt die Sidebar auf mobilen Geräten
-        // nach dem Klick auf einen Menüpunkt.
-        @click="mobileOpen = false"
-
-
-
         <RouterLink
-        
           v-for="item in navigation"
           :key="item.name"
           :to="item.href"
@@ -82,14 +39,11 @@
               : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
           ]"
         >
-         // Rendert dynamisch das passende Icon
-        // für den jeweiligen Menüpunkt.
           <component :is="item.icon" class="h-5 w-5" />
-          {{ item.name }}
+          <span>{{ item.name }}</span>
         </RouterLink>
       </nav>
 
-      <!-- Footer -->
       <div class="border-t border-sidebar-border p-4">
         <div class="flex items-center gap-3">
           <div
@@ -119,17 +73,6 @@
   </aside>
 </template>
 
-<!-- Logo Style in Sidebar -->
-<style scoped>
-.logo-wrapper {
-  background-color: #ffffff;
-  padding: 3px;
-  border-radius: 12px;
-  width: 50px;
-  height: 50px;
-}
-</style>
-
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
@@ -155,25 +98,19 @@ onMounted(() => {
   authStore.loadUser()
 })
 
-//nahc authstore = useAuthStore() aufrufen, damit 
-// die aktuellen Benutzerdaten geladen werden, wenn die Sidebar-Komponente gemountet wird. 
-// Dadurch können wir den Namen, Avatar und die Rolle des aktuellen Benutzers in der 
-// Sidebar anzeigen.
-const currentUserName = computed(() => authStore.currentUser?.name ?? 'Gast')
-const currentUserAvatar = computed(() => authStore.currentUser?.avatar ?? 'G')
+const currentUserName = computed(() => {
+  return authStore.currentUser?.name ?? 'Gast'
+})
 
-const currentUserRole = computed(() =>
-  authStore.currentUser?.role === 'admin' ? 'Admin' : 'Mitglied'
-)
+const currentUserAvatar = computed(() => {
+  const name = authStore.currentUser?.name ?? 'Gast'
+  return name.charAt(0).toUpperCase()
+})
 
-//handleLogout-Funktion, die die logout-Methode des authStore
-//  aufruft und den Benutzer zurück zur Startseite weiterleitet.
-function handleLogout() {
-  authStore.logout()
-  router.push('/')
-}
-//array speichert die Navigationspunkte der Sidebar,
-//  einschließlich Name, Zielroute und zugehörigem Icon.
+const currentUserRole = computed(() => {
+  return authStore.currentUser?.role === 'admin' ? 'Admin' : 'Mitglied'
+})
+
 const navigation = [
   { name: 'Dashboard', href: '/app/dashboard', icon: LayoutDashboard },
   { name: 'Ausgaben', href: '/app/ausgaben', icon: Receipt },
@@ -181,4 +118,25 @@ const navigation = [
   { name: 'Mitglieder', href: '/app/mitglieder', icon: Users },
   { name: 'Einstellungen', href: '/app/einstellungen', icon: Settings },
 ]
+
+function handleLogout() {
+  authStore.logout()
+  router.push('/')
+}
 </script>
+
+<style scoped>
+.logo-wrapper {
+  background-color: #ffffff;
+  padding: 3px;
+  border-radius: 12px;
+  width: 50px;
+  height: 50px;
+}
+
+.logo-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+</style>
