@@ -19,16 +19,35 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import type { Component } from 'vue'
-
-defineProps<{
-  title: string
-  value: string | number
-  subtitle?: string
-  icon: Component
-  trend?: { value: number; positive: boolean }
-  iconBgClass?: string
-  iconColorClass?: string
-}>()
+<script setup>
+defineProps({
+  title: {
+    type: String,
+    required: true,
+  },
+  value: {
+    type: [String, Number],
+    required: true,
+  },
+  subtitle: {
+    type: String,
+    default: '',
+  },
+  icon: {
+    type: Object,
+    required: true,
+  },
+  trend: {
+    type: Object,
+    default: null,
+  },
+  iconBgClass: {
+    type: String,
+    default: '',
+  },
+  iconColorClass: {
+    type: String,
+    default: '',
+  },
+})
 </script>

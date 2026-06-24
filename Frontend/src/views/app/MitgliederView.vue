@@ -19,7 +19,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 import { Users, Crown, UserCheck, Mail } from 'lucide-vue-next'
 import AppNavbar from '@/components/AppNavbar.vue'

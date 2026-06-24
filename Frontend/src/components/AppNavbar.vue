@@ -1,47 +1,50 @@
 <template>
-  <header class="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-background/95 backdrop-blur px-4 md:px-6">
-    <div class="ml-12 md:ml-0">
-      <h1 class="text-lg font-semibold text-foreground">{{ title }}</h1>
+  <header class="flex items-center justify-between border-b border-border bg-card px-4 py-3 md:px-6">
+    <div>
+      <h1 class="text-xl font-semibold text-card-foreground">{{ title }}</h1>
       <p v-if="subtitle" class="text-sm text-muted-foreground">{{ subtitle }}</p>
     </div>
 
-    <div class="flex items-center gap-2 md:gap-4">
-      <div v-if="showSearch" class="hidden md:flex relative">
+    <div class="flex items-center gap-3">
+      <div v-if="showSearch" class="relative">
         <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-
         <input
           :value="search"
+          type="text"
           placeholder="Suchen..."
-          class="w-64 pl-9 pr-3 h-9 rounded-md bg-secondary border-0 text-sm outline-none focus:ring-2 focus:ring-ring"
-          @input="emit('update:search', ($event.target as HTMLInputElement).value)"
+          class="h-9 w-48 rounded-md border border-border bg-input pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring md:w-64"
+          @input="emit('update:search', $event.target.value)"
         />
       </div>
 
-      <button class="relative flex items-center justify-center w-9 h-9 rounded-md hover:bg-accent transition-colors">
+      <button class="rounded-md p-2 hover:bg-muted" type="button">
         <Bell class="h-5 w-5" />
-        <span class="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center" />
       </button>
     </div>
   </header>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { Search, Bell } from 'lucide-vue-next'
 
-withDefaults(
-  defineProps<{
-    title: string
-    subtitle?: string
-    showSearch?: boolean
-    search?: string
-  }>(),
-  {
-    showSearch: true,
-    search: '',
-  }
-)
+defineProps({
+  title: {
+    type: String,
+    required: true,
+  },
+  subtitle: {
+    type: String,
+    default: '',
+  },
+  showSearch: {
+    type: Boolean,
+    default: true,
+  },
+  search: {
+    type: String,
+    default: '',
+  },
+})
 
-const emit = defineEmits<{
-  'update:search': [value: string]
-}>()
+const emit = defineEmits(['update:search'])
 </script>

@@ -1,12 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { api } from '@/lib/api'
-import type { Task } from '@/lib/mockData'
 
 export const useTasksStore = defineStore('tasks', () => {
-  const tasks = ref<Task[]>([])
+  const tasks = ref([])
   const isLoading = ref(false)
-  const error = ref<string | null>(null)
+  const error = ref(null)
 
   async function loadTasks() {
     isLoading.value = true
@@ -15,7 +14,7 @@ export const useTasksStore = defineStore('tasks', () => {
     try {
       const response = await api.get('/tasks')
 
-      tasks.value = response.data.map((task: any) => ({
+      tasks.value = response.data.map(task => ({
         ...task,
         id: String(task.id),
       }))
@@ -27,7 +26,7 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
-  async function addTask(task: Omit<Task, 'id'>) {
+  async function addTask(task) {
     error.value = null
 
     try {
@@ -43,13 +42,13 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
-  async function toggleStatus(id: string) {
+  async function toggleStatus(id) {
     error.value = null
 
     try {
       const response = await api.patch(`/tasks/${id}/toggle`)
 
-      const index = tasks.value.findIndex(t => t.id === id)
+      const index = tasks.value.findIndex(task => task.id === id)
 
       if (index !== -1) {
         tasks.value[index] = {

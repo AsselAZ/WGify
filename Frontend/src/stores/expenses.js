@@ -1,12 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { api } from '@/lib/api'
-import type { Expense } from '@/lib/mockData'
 
 export const useExpensesStore = defineStore('expenses', () => {
-  const expenses = ref<Expense[]>([])
+  const expenses = ref([])
   const isLoading = ref(false)
-  const error = ref<string | null>(null)
+  const error = ref(null)
 
   async function loadExpenses() {
     isLoading.value = true
@@ -15,7 +14,7 @@ export const useExpensesStore = defineStore('expenses', () => {
     try {
       const response = await api.get('/expenses')
 
-      expenses.value = response.data.map((expense: any) => ({
+      expenses.value = response.data.map(expense => ({
         ...expense,
         id: String(expense.id),
       }))
@@ -27,23 +26,23 @@ export const useExpensesStore = defineStore('expenses', () => {
     }
   }
 
-  async function addExpense(expense: Omit<Expense, 'id'>) {
-  error.value = null
+  async function addExpense(expense) {
+    error.value = null
 
-  try {
-    const response = await api.post('/expenses', expense)
+    try {
+      const response = await api.post('/expenses', expense)
 
-    expenses.value.unshift({
-      ...response.data,
-      id: String(response.data.id),
-    })
-  } catch (e) {
-    error.value = 'Ausgabe konnte nicht gespeichert werden'
-    console.error(e)
+      expenses.value.unshift({
+        ...response.data,
+        id: String(response.data.id),
+      })
+    } catch (e) {
+      error.value = 'Ausgabe konnte nicht gespeichert werden'
+      console.error(e)
+    }
   }
-}
 
-  const total = () => expenses.value.reduce((sum, e) => sum + e.amount, 0)
+  const total = () => expenses.value.reduce((sum, expense) => sum + Number(expense.amount), 0)
 
   return {
     expenses,

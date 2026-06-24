@@ -119,7 +119,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, reactive } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { CheckCircle } from 'lucide-vue-next'

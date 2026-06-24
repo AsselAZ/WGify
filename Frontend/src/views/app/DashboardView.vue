@@ -122,7 +122,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { computed, onMounted, ref } from 'vue'
 import { Receipt, ListTodo, Users, TrendingUp } from 'lucide-vue-next'
 import AppNavbar from '@/components/AppNavbar.vue'
@@ -200,7 +200,7 @@ const completedTasksCount = computed(() =>
   filteredTasks.value.filter(task => task.status === 'erledigt').length
 )
 
-function formatDate(date: string) {
+function formatDate(date) {
   return new Date(date).toLocaleDateString('de-DE')
 }
 </script>

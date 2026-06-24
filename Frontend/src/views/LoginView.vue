@@ -57,7 +57,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import WGLogo from '@/components/WGifyLogo.vue'
