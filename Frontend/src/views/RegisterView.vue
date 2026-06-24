@@ -156,11 +156,29 @@ async function handleSubmit() {
 
   isLoading.value = true
 
-  await new Promise(resolve => setTimeout(resolve, 500))
+  try {
+    await authStore.register(
+      form.name,
+      form.email,
+      form.password,
+      form.confirm
+    )
 
-  authStore.register(form.name, form.email)
+    router.push('/app/dashboard')
+  } catch (error) {
+    if (error.response?.status === 422) {
+      const errors = error.response.data.errors
 
-  isLoading.value = false
-  router.push('/app/dashboard')
+      errorMessage.value =
+        errors?.email?.[0] ||
+        errors?.password?.[0] ||
+        errors?.name?.[0] ||
+        'Registrierung fehlgeschlagen.'
+    } else {
+      errorMessage.value = 'Server nicht erreichbar.'
+    }
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>

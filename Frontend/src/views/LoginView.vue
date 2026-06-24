@@ -75,16 +75,18 @@ async function handleSubmit() {
   isLoading.value = true
   errorMessage.value = ''
 
-  await new Promise(resolve => setTimeout(resolve, 500))
+  try {
+    await authStore.login(email.value, password.value)
 
-  const success = authStore.login(email.value)
-
-  if (success) {
     router.push('/app/dashboard')
-  } else {
-    errorMessage.value = 'Diese E-Mail ist nicht registriert.'
+  } catch (error) {
+    if (error.response?.status === 422) {
+      errorMessage.value = 'E-Mail oder Passwort ist falsch.'
+    } else {
+      errorMessage.value = 'Server nicht erreichbar.'
+    }
+  } finally {
+    isLoading.value = false
   }
-
-  isLoading.value = false
 }
 </script>

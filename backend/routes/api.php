@@ -3,6 +3,9 @@
 use App\Models\Expense;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 use App\Models\Task; //Damit Laravel die Klasse Task kennt
 
@@ -96,5 +99,63 @@ Route::patch('/tasks/{task}/toggle', function (Task $task) {
         'assignedTo' => $task->assigned_to,
         'dueDate' => $task->due_date,
         'status' => $task->status,
+    ]);
+});
+
+
+// Auth ----------------------------------------------------------------
+
+Route::post('/register', function (Request $request) {
+    $request->merge([
+        'email' => strtolower($request->email),
+    ]);
+
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255|unique:users,email',
+        'password' => 'required|string|min:8|confirmed',
+    ]);
+
+    $user = User::create([
+        'name' => $validated['name'],
+        'email' => $validated['email'],
+        'password' => Hash::make($validated['password']),
+    ]);
+
+    return response()->json([
+        'message' => 'Registrierung erfolgreich',
+        'user' => [
+            'id' => (string) $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ],
+    ], 201);
+});
+
+Route::post('/login', function (Request $request) {
+    $request->merge([
+        'email' => strtolower($request->email),
+    ]);
+
+    $validated = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required|string',
+    ]);
+
+    $user = User::where('email', $validated['email'])->first();
+
+    if (!$user || !Hash::check($validated['password'], $user->password)) {
+        throw ValidationException::withMessages([
+            'email' => ['E-Mail oder Passwort ist falsch.'],
+        ]);
+    }
+
+    return response()->json([
+        'message' => 'Login erfolgreich',
+        'user' => [
+            'id' => (string) $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ],
     ]);
 });

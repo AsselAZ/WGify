@@ -1,55 +1,42 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { members } from '@/lib/mockData'
+import { api } from '@/lib/api'
 
 export const useAuthStore = defineStore('auth', () => {
   const currentUser = ref(null)
-  const registeredUsers = ref([])
 
   function loadUser() {
     const savedUser = localStorage.getItem('currentUser')
-    const savedRegisteredUsers = localStorage.getItem('registeredUsers')
 
     if (savedUser) {
       currentUser.value = JSON.parse(savedUser)
     }
-
-    if (savedRegisteredUsers) {
-      registeredUsers.value = JSON.parse(savedRegisteredUsers)
-    }
   }
 
-  function login(email) {
-    loadUser()
-
-    const allUsers = [...members, ...registeredUsers.value]
-    const user = allUsers.find(member => member.email === email)
-
-    if (user) {
-      currentUser.value = user
-      localStorage.setItem('currentUser', JSON.stringify(user))
-      return true
-    }
-
-    return false
-  }
-
-  function register(name, email) {
-    const newUser = {
-      id: Date.now().toString(),
+  async function register(name, email, password, passwordConfirmation) {
+    const response = await api.post('/register', {
       name,
       email,
-      role: 'mitglied',
-      avatar: name.charAt(0).toUpperCase(),
-    }
+      password,
+      password_confirmation: passwordConfirmation,
+    })
 
-    registeredUsers.value.push(newUser)
-    currentUser.value = newUser
+    currentUser.value = response.data.user
+    localStorage.setItem('currentUser', JSON.stringify(response.data.user))
 
-    localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers.value))
-    localStorage.setItem('currentUser', JSON.stringify(newUser))
+    return response.data.user
+  }
 
-    return newUser
+  async function login(email, password) {
+    const response = await api.post('/login', {
+      email,
+      password,
+    })
+
+    currentUser.value = response.data.user
+    localStorage.setItem('currentUser', JSON.stringify(response.data.user))
+
+    return response.data.user
   }
 
   function logout() {
@@ -59,10 +46,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     currentUser,
-    registeredUsers,
     loadUser,
-    login,
     register,
+    login,
     logout,
   }
 })
