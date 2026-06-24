@@ -159,3 +159,17 @@ Route::post('/login', function (Request $request) {
         ],
     ]);
 });
+
+// Mitglieder ----------------------------------------------------------------
+
+Route::get('/members', function () {
+    return User::latest()->get()->map(function ($user) {
+        return [
+            'id' => (string) $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => 'mitglied',
+            'avatar' => strtoupper(substr($user->name, 0, 1)),
+        ];
+    });
+});
