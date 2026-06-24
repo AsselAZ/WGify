@@ -1,29 +1,4 @@
-export interface Member {
-  id: string
-  name: string
-  email: string
-  role: 'admin' | 'mitglied'
-  avatar: string
-}
-
-export interface Expense {
-  id: string
-  title: string
-  amount: number
-  category: string
-  paidBy: string
-  date: string
-}
-
-export interface Task {
-  id: string
-  title: string
-  assignedTo: string
-  dueDate: string
-  status: 'offen' | 'erledigt'
-}
-
-export const members: Member[] = [
+export const members = [
   { id: '1', name: 'Assel', email: 'assel@wgify.de', role: 'admin', avatar: 'A' },
   { id: '2', name: 'Max', email: 'max@wgify.de', role: 'mitglied', avatar: 'M' },
   { id: '3', name: 'Lisa', email: 'lisa@wgify.de', role: 'mitglied', avatar: 'L' },
@@ -32,7 +7,7 @@ export const members: Member[] = [
 
 export const categories = ['Miete', 'Strom', 'Internet', 'Lebensmittel', 'Haushalt', 'Sonstiges']
 
-export const expenses: Expense[] = [
+export const expenses = [
   { id: '1', title: 'Internet', amount: 39.99, category: 'Internet', paidBy: 'Assel', date: '2024-01-15' },
   { id: '2', title: 'Strom', amount: 85.50, category: 'Strom', paidBy: 'Max', date: '2024-01-10' },
   { id: '3', title: 'Einkauf REWE', amount: 67.30, category: 'Lebensmittel', paidBy: 'Lisa', date: '2024-01-08' },
@@ -40,7 +15,7 @@ export const expenses: Expense[] = [
   { id: '5', title: 'Klopapier', amount: 12.99, category: 'Haushalt', paidBy: 'Assel', date: '2024-01-03' },
 ]
 
-export const tasks: Task[] = [
+export const tasks = [
   { id: '1', title: 'Kueche putzen', assignedTo: 'Assel', dueDate: '2024-01-20', status: 'offen' },
   { id: '2', title: 'Muell rausbringen', assignedTo: 'Max', dueDate: '2024-01-18', status: 'erledigt' },
   { id: '3', title: 'Bad schrubben', assignedTo: 'Lisa', dueDate: '2024-01-22', status: 'offen' },

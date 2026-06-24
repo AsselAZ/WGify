@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { members, type Member } from '@/lib/mockData'
+import { members } from '@/lib/mockData'
 
 export const useAuthStore = defineStore('auth', () => {
-  const currentUser = ref<Member | null>(null)
-  const registeredUsers = ref<Member[]>([])
+  const currentUser = ref(null)
+  const registeredUsers = ref([])
 
   function loadUser() {
     const savedUser = localStorage.getItem('currentUser')
@@ -19,7 +19,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function login(email: string) {
+  function login(email) {
     loadUser()
 
     const allUsers = [...members, ...registeredUsers.value]
@@ -34,8 +34,8 @@ export const useAuthStore = defineStore('auth', () => {
     return false
   }
 
-  function register(name: string, email: string) {
-    const newUser: Member = {
+  function register(name, email) {
+    const newUser = {
       id: Date.now().toString(),
       name,
       email,

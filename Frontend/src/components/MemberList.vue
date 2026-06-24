@@ -66,26 +66,55 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref } from 'vue'
 import { Plus, Crown, User } from 'lucide-vue-next'
-import type { Member } from '@/lib/mockData'
 
-defineProps<{ members: Member[] }>()
-const emit = defineEmits<{ addMember: [member: Omit<Member, 'id' | 'avatar'>] }>()
+defineProps({
+  members: {
+    type: Array,
+    required: true,
+  },
+})
+
+const emit = defineEmits(['addMember'])
 
 const showDialog = ref(false)
-const form = ref({ name: '', email: '', role: 'mitglied' as 'admin' | 'mitglied' })
+
+const form = ref({
+  name: '',
+  email: '',
+  role: 'mitglied',
+})
 
 function handleSubmit() {
-  if (!form.value.name || !form.value.email) return
-  emit('addMember', { name: form.value.name, email: form.value.email, role: form.value.role })
-  form.value = { name: '', email: '', role: 'mitglied' }
+  if (!form.value.name || !form.value.email) {
+    return
+  }
+
+  emit('addMember', {
+    name: form.value.name,
+    email: form.value.email,
+    role: form.value.role,
+  })
+
+  form.value = {
+    name: '',
+    email: '',
+    role: 'mitglied',
+  }
+
   showDialog.value = false
 }
 
-const colors = ['bg-primary text-primary-foreground', 'bg-accent text-accent-foreground', 'bg-purple text-purple-foreground', 'bg-secondary text-secondary-foreground']
-function getMemberColor(index: number) {
+const colors = [
+  'bg-primary text-primary-foreground',
+  'bg-accent text-accent-foreground',
+  'bg-purple text-purple-foreground',
+  'bg-secondary text-secondary-foreground',
+]
+
+function getMemberColor(index) {
   return colors[index % colors.length]
 }
 </script>

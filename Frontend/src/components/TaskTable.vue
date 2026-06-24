@@ -84,28 +84,50 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref } from 'vue'
 import { Plus, CheckCircle2, Circle } from 'lucide-vue-next'
-import { members, type Task } from '@/lib/mockData'
+import { members } from '@/lib/mockData'
 
-defineProps<{ tasks: Task[] }>()
-const emit = defineEmits<{
-  addTask: [task: Omit<Task, 'id'>]
-  toggleStatus: [id: string]
-}>()
+defineProps({
+  tasks: {
+    type: Array,
+    required: true,
+  },
+})
+
+const emit = defineEmits(['addTask', 'toggleStatus'])
 
 const showDialog = ref(false)
-const form = ref({ title: '', assignedTo: '', dueDate: new Date().toISOString().split('T')[0] })
+
+const form = ref({
+  title: '',
+  assignedTo: '',
+  dueDate: new Date().toISOString().split('T')[0],
+})
 
 function handleSubmit() {
-  if (!form.value.title || !form.value.assignedTo) return
-  emit('addTask', { title: form.value.title, assignedTo: form.value.assignedTo, dueDate: form.value.dueDate, status: 'offen' })
-  form.value = { title: '', assignedTo: '', dueDate: new Date().toISOString().split('T')[0] }
+  if (!form.value.title || !form.value.assignedTo) {
+    return
+  }
+
+  emit('addTask', {
+    title: form.value.title,
+    assignedTo: form.value.assignedTo,
+    dueDate: form.value.dueDate,
+    status: 'offen',
+  })
+
+  form.value = {
+    title: '',
+    assignedTo: '',
+    dueDate: new Date().toISOString().split('T')[0],
+  }
+
   showDialog.value = false
 }
 
-function formatDate(date: string) {
+function formatDate(date) {
   return new Date(date).toLocaleDateString('de-DE')
 }
 </script>

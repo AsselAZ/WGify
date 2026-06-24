@@ -218,7 +218,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { User, Lock, Home, Bell, Save } from 'lucide-vue-next'
 import AppNavbar from '@/components/AppNavbar.vue'

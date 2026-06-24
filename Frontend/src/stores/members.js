@@ -1,16 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { members as initialMembers, type Member } from '@/lib/mockData'
+import { members as initialMembers } from '@/lib/mockData'
 
 export const useMembersStore = defineStore('members', () => {
-  const members = ref<Member[]>([])
+  const members = ref([])
 
-  function normalizeEmail(email: string) {
+  function normalizeEmail(email) {
     return email.trim().toLowerCase()
   }
 
-  function removeDuplicateMembers(users: Member[]) {
-    const seenEmails = new Set<string>()
+  function removeDuplicateMembers(users) {
+    const seenEmails = new Set()
 
     return users.filter(user => {
       const email = normalizeEmail(user.email)
@@ -30,12 +30,12 @@ export const useMembersStore = defineStore('members', () => {
     )
 
     const savedRegisteredUsers = localStorage.getItem('registeredUsers')
-    const registeredUsers: Member[] = savedRegisteredUsers
+    const registeredUsers = savedRegisteredUsers
       ? JSON.parse(savedRegisteredUsers)
       : []
 
     const savedCurrentUser = localStorage.getItem('currentUser')
-    const currentUser: Member[] = savedCurrentUser
+    const currentUser = savedCurrentUser
       ? [JSON.parse(savedCurrentUser)]
       : []
 
@@ -48,15 +48,15 @@ export const useMembersStore = defineStore('members', () => {
     members.value = removeDuplicateMembers(allMembers)
   }
 
-  function addMember(member: Omit<Member, 'id' | 'avatar'>) {
-    const newMember: Member = {
+  function addMember(member) {
+    const newMember = {
       ...member,
       id: Date.now().toString(),
       avatar: member.name.charAt(0).toUpperCase(),
     }
 
     const savedRegisteredUsers = localStorage.getItem('registeredUsers')
-    const registeredUsers: Member[] = savedRegisteredUsers
+    const registeredUsers = savedRegisteredUsers
       ? JSON.parse(savedRegisteredUsers)
       : []
 

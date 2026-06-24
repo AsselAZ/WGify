@@ -156,7 +156,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { RouterLink } from 'vue-router'
 import { ArrowRight, Sparkles, Receipt, ListTodo, Users, CheckCircle } from 'lucide-vue-next'
 import WGLogo from '@/components/WGifyLogo.vue'

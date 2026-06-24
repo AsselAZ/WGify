@@ -130,7 +130,7 @@
 }
 </style>
 
-<script setup lang="ts">
+<script setup>
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {

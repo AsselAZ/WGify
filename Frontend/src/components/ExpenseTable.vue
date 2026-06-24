@@ -84,19 +84,34 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref } from 'vue'
 import { Plus } from 'lucide-vue-next'
-import { categories, members, type Expense } from '@/lib/mockData'
+import { categories, members } from '@/lib/mockData'
 
-const props = defineProps<{ expenses: Expense[] }>()
-const emit = defineEmits<{ addExpense: [expense: Omit<Expense, 'id'>] }>()
+defineProps({
+  expenses: {
+    type: Array,
+    required: true,
+  },
+})
+
+const emit = defineEmits(['addExpense'])
 
 const showDialog = ref(false)
-const form = ref({ title: '', amount: '', category: '', paidBy: '', date: new Date().toISOString().split('T')[0] })
+const form = ref({
+  title: '',
+  amount: '',
+  category: '',
+  paidBy: '',
+  date: new Date().toISOString().split('T')[0],
+})
 
 function handleSubmit() {
-  if (!form.value.title || !form.value.amount || !form.value.category || !form.value.paidBy) return
+  if (!form.value.title || !form.value.amount || !form.value.category || !form.value.paidBy) {
+    return
+  }
+
   emit('addExpense', {
     title: form.value.title,
     amount: parseFloat(form.value.amount),
@@ -104,22 +119,36 @@ function handleSubmit() {
     paidBy: form.value.paidBy,
     date: form.value.date,
   })
-  form.value = { title: '', amount: '', category: '', paidBy: '', date: new Date().toISOString().split('T')[0] }
+
+  form.value = {
+    title: '',
+    amount: '',
+    category: '',
+    paidBy: '',
+    date: new Date().toISOString().split('T')[0],
+  }
+
   showDialog.value = false
 }
 
-function getCategoryColor(category: string) {
+function getCategoryColor(category) {
   switch (category.toLowerCase()) {
-    case 'miete': return 'bg-primary/10 text-primary'
-    case 'strom': return 'bg-warning/20 text-warning-foreground'
-    case 'internet': return 'bg-secondary text-secondary-foreground'
-    case 'lebensmittel': return 'bg-accent/50 text-accent-foreground'
-    case 'haushalt': return 'bg-accent/50 text-accent-foreground'
-    default: return 'bg-purple/15 text-purple'
+    case 'miete':
+      return 'bg-primary/10 text-primary'
+    case 'strom':
+      return 'bg-warning/20 text-warning-foreground'
+    case 'internet':
+      return 'bg-secondary text-secondary-foreground'
+    case 'lebensmittel':
+      return 'bg-accent/50 text-accent-foreground'
+    case 'haushalt':
+      return 'bg-accent/50 text-accent-foreground'
+    default:
+      return 'bg-purple/15 text-purple'
   }
 }
 
-function formatDate(date: string) {
+function formatDate(date) {
   return new Date(date).toLocaleDateString('de-DE')
 }
 </script>

@@ -47,7 +47,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { computed, onMounted, ref } from 'vue'
 import { Receipt, TrendingUp, PieChart, Calendar } from 'lucide-vue-next'
 import AppNavbar from '@/components/AppNavbar.vue'

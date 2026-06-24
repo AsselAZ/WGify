@@ -48,7 +48,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { computed, onMounted, ref } from 'vue'
 import { ListTodo, Clock, CheckCircle2, AlertCircle } from 'lucide-vue-next'
 import AppNavbar from '@/components/AppNavbar.vue'
