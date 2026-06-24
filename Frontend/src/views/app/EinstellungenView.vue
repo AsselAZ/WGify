@@ -249,22 +249,22 @@ const saveMessage = ref('')
 
 const notifItems = [
   {
-    key: 'email' as const,
+    key: 'email' ,
     label: 'E-Mail Benachrichtigungen',
     desc: 'Erhalte Updates per E-Mail',
   },
   {
-    key: 'push' as const,
+    key: 'push' ,
     label: 'Push Benachrichtigungen',
     desc: 'Browser Push-Nachrichten',
   },
   {
-    key: 'tasks' as const,
+    key: 'tasks' ,
     label: 'Aufgaben-Erinnerungen',
     desc: 'Erinnerungen für anstehende Aufgaben',
   },
   {
-    key: 'expenses' as const,
+    key: 'expenses' ,
     label: 'Ausgaben-Updates',
     desc: 'Benachrichtigungen bei neuen Ausgaben',
   },
