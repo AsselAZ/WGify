@@ -12,7 +12,7 @@
           </p>
         </div>
 
-```
+
     <ul class="space-y-4">
       <li v-for="item in benefits" :key="item" class="flex items-start gap-3">
         <CheckCircle class="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
@@ -114,7 +114,7 @@
     </p>
   </div>
 </div>
-```
+
 
   </div>
 </template>
