@@ -14,7 +14,7 @@
           :value="`${total().toFixed(2)} EUR`"
           subtitle="Diesen Monat"
           :icon="Receipt"
-          :trend="{ value: 12, positive: false }"
+          :trend="null"
           iconBgClass="bg-purple/15"
           iconColorClass="text-purple"
         />
@@ -42,7 +42,7 @@
           :value="`${avgPerPerson.toFixed(2)} EUR`"
           subtitle="Durchschnitt"
           :icon="TrendingUp"
-          :trend="{ value: 5, positive: true }"
+          :trend="null"
           iconBgClass="bg-primary/10"
           iconColorClass="text-primary"
         />
