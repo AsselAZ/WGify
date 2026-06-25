@@ -64,7 +64,7 @@
           <div>
             <h3 class="text-lg font-semibold">Mitglied einladen</h3>
             <p class="mt-1 text-sm text-muted-foreground">
-              Teile diesen Link. Neue Mitglieder registrieren sich selbst und erscheinen danach automatisch in der Mitgliederliste.
+              Neue Mitglieder wählen bei der Registrierung „WG beitreten“ und geben diesen Code ein.
             </p>
           </div>
 
@@ -78,27 +78,26 @@
         </div>
 
         <div class="mt-5 space-y-2">
-          <label class="text-sm font-medium">Registrierungslink</label>
+          <label class="text-sm font-medium">Einladungscode</label>
 
           <div class="flex gap-2">
             <input
-              :value="inviteLink"
+              :value="inviteCode"
               readonly
-              class="w-full rounded-md border border-border bg-input px-3 py-2 text-sm outline-none"
+              class="w-full rounded-md border border-border bg-input px-3 py-2 text-sm font-mono font-semibold"
             />
 
             <button
               type="button"
-              class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              @click="copyInviteLink"
+              class="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
+              @click="copyInviteCode"
             >
-              <Copy class="h-4 w-4" />
               Kopieren
             </button>
           </div>
 
           <p v-if="copied" class="text-sm text-green-600">
-            Link wurde kopiert.
+            Code kopiert.
           </p>
         </div>
 
@@ -122,7 +121,6 @@ import {
   UserPlus,
   Crown,
   User,
-  Copy,
   X,
 } from 'lucide-vue-next'
 
@@ -136,12 +134,22 @@ defineProps({
 const showInviteDialog = ref(false)
 const copied = ref(false)
 
-const inviteLink = computed(() => {
-  return `${window.location.origin}/registrieren`
+const currentUser = computed(() => {
+  const savedUser = localStorage.getItem('currentUser')
+
+  if (!savedUser) {
+    return null
+  }
+
+  return JSON.parse(savedUser)
 })
 
-async function copyInviteLink() {
-  await navigator.clipboard.writeText(inviteLink.value)
+const inviteCode = computed(() => {
+  return currentUser.value?.apartment?.inviteCode || ''
+})
+
+async function copyInviteCode() {
+  await navigator.clipboard.writeText(inviteCode.value)
   copied.value = true
 
   setTimeout(() => {

@@ -1,29 +1,75 @@
 <?php
 
 use App\Models\Expense;
+use App\Models\Task; //Damit Laravel die Klasse Task kennt
+use App\Models\User;
+use App\Models\Apartment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-use App\Models\Task; //Damit Laravel die Klasse Task kennt
 
-//Ausgaben
-Route::get('/expenses', function () {
-    return Expense::latest()->get()->map(function ($expense) {
-        return [
-            'id' => (string) $expense->id,
-            'title' => $expense->title,
-            'amount' => (float) $expense->amount,
-            'paidBy' => $expense->paid_by,
-            'category' => $expense->category,
-            'date' => $expense->date,
-        ];
-    });
+
+$getCurrentUser = function (Request $request) {
+    $userId = $request->header('X-User-Id');
+
+    if (!$userId) {
+        abort(401, 'Kein Benutzer angemeldet.');
+    }
+
+    return User::with('apartment')->findOrFail($userId);
+};
+
+$userPayload = function (User $user) {
+    $user->load('apartment');
+
+    return [
+        'id' => (string) $user->id,
+        'name' => $user->name,
+        'email' => $user->email,
+        'role' => $user->role,
+        'apartment_id' => $user->apartment_id ? (string) $user->apartment_id : null,
+        'apartment' => $user->apartment ? [
+            'id' => (string) $user->apartment->id,
+            'name' => $user->apartment->name,
+            'inviteCode' => $user->apartment->invite_code,
+        ] : null,
+    ];
+};
+
+// Ausgaben ----------------------------------------------------------------
+
+Route::get('/expenses', function (Request $request) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
+
+    if (!$currentUser->apartment_id) {
+        return [];
+    }
+
+    return Expense::where('apartment_id', $currentUser->apartment_id)
+        ->latest()
+        ->get()
+        ->map(function ($expense) {
+            return [
+                'id' => (string) $expense->id,
+                'title' => $expense->title,
+                'amount' => (float) $expense->amount,
+                'paidBy' => $expense->paid_by,
+                'category' => $expense->category,
+                'date' => $expense->date,
+            ];
+        });
 });
 
-Route::post('/expenses', function (Request $request) {
+Route::post('/expenses', function (Request $request) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
+
+    if (!$currentUser->apartment_id) {
+        abort(403, 'Du bist in keiner WG.');
+    }
+
     $validated = $request->validate([
         'title' => 'required|string|max:255',
         'amount' => 'required|numeric',
@@ -33,6 +79,7 @@ Route::post('/expenses', function (Request $request) {
     ]);
 
     $expense = Expense::create([
+        'apartment_id' => $currentUser->apartment_id,
         'title' => $validated['title'],
         'amount' => $validated['amount'],
         'paid_by' => $validated['paidBy'],
@@ -50,7 +97,13 @@ Route::post('/expenses', function (Request $request) {
     ], 201);
 });
 
-Route::patch('/expenses/{expense}', function (Request $request, Expense $expense) {
+Route::patch('/expenses/{expense}', function (Request $request, Expense $expense) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
+
+    if ($expense->apartment_id !== $currentUser->apartment_id) {
+        abort(403, 'Du darfst diese Ausgabe nicht bearbeiten.');
+    }
+
     $validated = $request->validate([
         'title' => 'required|string|max:255',
         'amount' => 'required|numeric',
@@ -77,7 +130,13 @@ Route::patch('/expenses/{expense}', function (Request $request, Expense $expense
     ]);
 });
 
-Route::delete('/expenses/{expense}', function (Expense $expense) {
+Route::delete('/expenses/{expense}', function (Request $request, Expense $expense) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
+
+    if ($expense->apartment_id !== $currentUser->apartment_id) {
+        abort(403, 'Du darfst diese Ausgabe nicht löschen.');
+    }
+
     $expense->delete();
 
     return response()->json([
@@ -86,20 +145,36 @@ Route::delete('/expenses/{expense}', function (Expense $expense) {
 });
 
 
-//Aufgaben ----------------------------------------------------------------
-Route::get('/tasks', function () {
-    return Task::latest()->get()->map(function ($task) {
-        return [
-            'id' => (string) $task->id,
-            'title' => $task->title,
-            'assignedTo' => $task->assigned_to,
-            'dueDate' => $task->due_date,
-            'status' => $task->status,
-        ];
-    });
+// Aufgaben ----------------------------------------------------------------
+
+Route::get('/tasks', function (Request $request) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
+
+    if (!$currentUser->apartment_id) {
+        return [];
+    }
+
+    return Task::where('apartment_id', $currentUser->apartment_id)
+        ->latest()
+        ->get()
+        ->map(function ($task) {
+            return [
+                'id' => (string) $task->id,
+                'title' => $task->title,
+                'assignedTo' => $task->assigned_to,
+                'dueDate' => $task->due_date,
+                'status' => $task->status,
+            ];
+        });
 });
 
-Route::post('/tasks', function (Request $request) {
+Route::post('/tasks', function (Request $request) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
+
+    if (!$currentUser->apartment_id) {
+        abort(403, 'Du bist in keiner WG.');
+    }
+
     $validated = $request->validate([
         'title' => 'required|string|max:255',
         'assignedTo' => 'required|string|max:255',
@@ -108,6 +183,7 @@ Route::post('/tasks', function (Request $request) {
     ]);
 
     $task = Task::create([
+        'apartment_id' => $currentUser->apartment_id,
         'title' => $validated['title'],
         'assigned_to' => $validated['assignedTo'],
         'due_date' => $validated['dueDate'],
@@ -123,7 +199,13 @@ Route::post('/tasks', function (Request $request) {
     ], 201);
 });
 
-Route::patch('/tasks/{task}', function (Request $request, Task $task) {
+Route::patch('/tasks/{task}', function (Request $request, Task $task) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
+
+    if ($task->apartment_id !== $currentUser->apartment_id) {
+        abort(403, 'Du darfst diese Aufgabe nicht bearbeiten.');
+    }
+
     $validated = $request->validate([
         'title' => 'required|string|max:255',
         'assignedTo' => 'required|string|max:255',
@@ -147,15 +229,13 @@ Route::patch('/tasks/{task}', function (Request $request, Task $task) {
     ]);
 });
 
-Route::delete('/tasks/{task}', function (Task $task) {
-    $task->delete();
+Route::patch('/tasks/{task}/toggle', function (Request $request, Task $task) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
 
-    return response()->json([
-        'message' => 'Aufgabe wurde gelöscht',
-    ]);
-});
+    if ($task->apartment_id !== $currentUser->apartment_id) {
+        abort(403, 'Du darfst diese Aufgabe nicht ändern.');
+    }
 
-Route::patch('/tasks/{task}/toggle', function (Task $task) {
     $task->update([
         'status' => $task->status === 'offen' ? 'erledigt' : 'offen',
     ]);
@@ -169,37 +249,76 @@ Route::patch('/tasks/{task}/toggle', function (Task $task) {
     ]);
 });
 
+Route::delete('/tasks/{task}', function (Request $request, Task $task) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
+
+    if ($task->apartment_id !== $currentUser->apartment_id) {
+        abort(403, 'Du darfst diese Aufgabe nicht löschen.');
+    }
+
+    $task->delete();
+
+    return response()->json([
+        'message' => 'Aufgabe wurde gelöscht',
+    ]);
+});
+
 
 // Auth ----------------------------------------------------------------
 
-Route::post('/register', function (Request $request) {
+Route::post('/register', function (Request $request) use ($userPayload) {
     $request->merge([
         'email' => strtolower($request->email),
+        'inviteCode' => $request->inviteCode ? strtoupper(trim($request->inviteCode)) : null,
     ]);
 
     $validated = $request->validate([
         'name' => 'required|string|max:255',
         'email' => 'required|email|max:255|unique:users,email',
         'password' => 'required|string|min:8|confirmed',
+        'mode' => 'required|in:create,join',
+        'apartmentName' => 'required_if:mode,create|nullable|string|max:255',
+        'inviteCode' => 'required_if:mode,join|nullable|string|max:20',
     ]);
+
+    if ($validated['mode'] === 'create') {
+        do {
+            $inviteCode = strtoupper(Str::random(6));
+        } while (Apartment::where('invite_code', $inviteCode)->exists());
+
+        $apartment = Apartment::create([
+            'name' => $validated['apartmentName'],
+            'invite_code' => $inviteCode,
+        ]);
+
+        $role = 'admin';
+    } else {
+        $apartment = Apartment::where('invite_code', $validated['inviteCode'])->first();
+
+        if (!$apartment) {
+            throw ValidationException::withMessages([
+                'inviteCode' => ['Dieser Einladungscode ist ungültig.'],
+            ]);
+        }
+
+        $role = 'mitglied';
+    }
 
     $user = User::create([
         'name' => $validated['name'],
         'email' => $validated['email'],
         'password' => Hash::make($validated['password']),
+        'apartment_id' => $apartment->id,
+        'role' => $role,
     ]);
 
     return response()->json([
         'message' => 'Registrierung erfolgreich',
-        'user' => [
-            'id' => (string) $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-        ],
+        'user' => $userPayload($user),
     ], 201);
 });
 
-Route::post('/login', function (Request $request) {
+Route::post('/login', function (Request $request) use ($userPayload) {
     $request->merge([
         'email' => strtolower($request->email),
     ]);
@@ -219,24 +338,80 @@ Route::post('/login', function (Request $request) {
 
     return response()->json([
         'message' => 'Login erfolgreich',
-        'user' => [
-            'id' => (string) $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-        ],
+        'user' => $userPayload($user),
     ]);
 });
 
 // Mitglieder ----------------------------------------------------------------
 
-Route::get('/members', function () {
-    return User::latest()->get()->map(function ($user) {
-        return [
-            'id' => (string) $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
+Route::get('/members', function (Request $request) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
+
+    if (!$currentUser->apartment_id) {
+        return [];
+    }
+
+    return User::where('apartment_id', $currentUser->apartment_id)
+        ->latest()
+        ->get()
+        ->map(function ($user) {
+            return [
+                'id' => (string) $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'avatar' => strtoupper(substr($user->name, 0, 1)),
+            ];
+        });
+});
+
+// WG verlassen ------------------------------
+Route::post('/apartments/leave', function (Request $request) use ($getCurrentUser, $userPayload) {
+    $user = $getCurrentUser($request);
+
+    if (!$user->apartment_id) {
+        throw ValidationException::withMessages([
+            'apartment' => ['Du bist aktuell in keiner WG.'],
+        ]);
+    }
+
+    $apartment = $user->apartment;
+    $members = User::where('apartment_id', $apartment->id)->get();
+
+    if ($members->count() === 1) {
+        $user->update([
+            'apartment_id' => null,
             'role' => 'mitglied',
-            'avatar' => strtoupper(substr($user->name, 0, 1)),
-        ];
-    });
+        ]);
+
+        $apartment->delete();
+
+        return response()->json([
+            'message' => 'Du hast die WG verlassen. Die WG wurde gelöscht, weil du das letzte Mitglied warst.',
+            'user' => $userPayload($user->fresh()),
+        ]);
+    }
+
+    if ($user->role === 'admin') {
+        $nextAdmin = User::where('apartment_id', $apartment->id)
+            ->where('id', '!=', $user->id)
+            ->oldest()
+            ->first();
+
+        if ($nextAdmin) {
+            $nextAdmin->update([
+                'role' => 'admin',
+            ]);
+        }
+    }
+
+    $user->update([
+        'apartment_id' => null,
+        'role' => 'mitglied',
+    ]);
+
+    return response()->json([
+        'message' => 'Du hast die WG verlassen.',
+        'user' => $userPayload($user->fresh()),
+    ]);
 });

@@ -13,12 +13,15 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function register(name, email, password, passwordConfirmation) {
+  async function register(data) {
     const response = await api.post('/register', {
-      name,
-      email,
-      password,
-      password_confirmation: passwordConfirmation,
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      password_confirmation: data.passwordConfirmation,
+      mode: data.mode,
+      apartmentName: data.apartmentName,
+      inviteCode: data.inviteCode,
     })
 
     currentUser.value = response.data.user
