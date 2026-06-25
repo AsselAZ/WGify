@@ -40,7 +40,10 @@
       <div class="rounded-xl border border-border bg-card p-6">
         <ExpenseTable
           :expenses="filteredExpenses"
+          :members="membersStore.members"
           @add-expense="store.addExpense"
+          @update-expense="store.updateExpense"
+          @delete-expense="store.deleteExpense"
         />
       </div>
     </div>
@@ -48,6 +51,7 @@
 </template>
 
 <script setup>
+
 import { computed, onMounted, ref } from 'vue'
 import { Receipt, TrendingUp, PieChart, Calendar } from 'lucide-vue-next'
 import AppNavbar from '@/components/AppNavbar.vue'
@@ -63,6 +67,7 @@ const searchQuery = ref('')
 
 onMounted(() => {
   store.loadExpenses()
+  membersStore.loadMembers()
 })
 
 const filteredExpenses = computed(() => {

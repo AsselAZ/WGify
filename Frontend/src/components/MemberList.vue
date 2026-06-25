@@ -1,74 +1,130 @@
 <template>
   <div class="space-y-4">
     <div class="flex items-center justify-between">
-      <h2 class="text-lg font-semibold">WG-Mitglieder</h2>
+      <h3 class="text-lg font-semibold">WG-Mitglieder</h3>
+
       <button
-        class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-        @click="showDialog = true"
+        type="button"
+        class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+        @click="showInviteDialog = true"
       >
-        <Plus class="h-4 w-4" />
+        <UserPlus class="h-4 w-4" />
         Mitglied einladen
       </button>
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="space-y-3">
       <div
-        v-for="(member, index) in members"
+        v-for="member in members"
         :key="member.id"
-        class="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-card/80"
+        class="flex items-center gap-4 rounded-lg border border-border bg-background p-4"
       >
-        <div :class="['flex h-12 w-12 items-center justify-center rounded-full text-lg font-semibold', getMemberColor(index)]">
-          {{ member.avatar }}
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-purple text-purple-foreground font-semibold"
+        >
+          {{ member.avatar || member.name.charAt(0).toUpperCase() }}
         </div>
+
         <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2">
-            <p class="font-medium text-card-foreground truncate">{{ member.name }}</p>
-            <Crown v-if="member.role === 'admin'" class="h-4 w-4 text-purple flex-shrink-0" />
-          </div>
-          <p class="text-sm text-muted-foreground truncate">{{ member.email }}</p>
+          <p class="font-medium truncate">
+            {{ member.name }}
+          </p>
+          <p class="text-sm text-muted-foreground truncate">
+            {{ member.email }}
+          </p>
         </div>
-        <span :class="['inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium flex-shrink-0',
-          member.role === 'admin' ? 'bg-purple/15 text-purple' : 'bg-secondary text-secondary-foreground']">
+
+        <div
+          class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium"
+          :class="member.role === 'admin'
+            ? 'bg-yellow-100 text-yellow-700'
+            : 'bg-muted text-muted-foreground'"
+        >
           <Crown v-if="member.role === 'admin'" class="h-3 w-3" />
           <User v-else class="h-3 w-3" />
           {{ member.role === 'admin' ? 'Admin' : 'Mitglied' }}
-        </span>
+        </div>
       </div>
+
+      <p
+        v-if="members.length === 0"
+        class="text-sm text-muted-foreground text-center py-8"
+      >
+        Noch keine Mitglieder vorhanden.
+      </p>
     </div>
 
-    <!-- Dialog -->
-    <div v-if="showDialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div class="bg-card rounded-xl border border-border p-6 w-full max-w-md mx-4 shadow-xl">
-        <h3 class="text-lg font-semibold mb-4">Neues Mitglied einladen</h3>
-        <form class="space-y-4" @submit.prevent="handleSubmit">
-          <div class="space-y-2">
-            <label class="text-sm font-medium">Name</label>
-            <input v-model="form.name" class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring" placeholder="z.B. Max Mustermann" />
+    <div
+      v-if="showInviteDialog"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      @click.self="showInviteDialog = false"
+    >
+      <div class="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h3 class="text-lg font-semibold">Mitglied einladen</h3>
+            <p class="mt-1 text-sm text-muted-foreground">
+              Teile diesen Link. Neue Mitglieder registrieren sich selbst und erscheinen danach automatisch in der Mitgliederliste.
+            </p>
           </div>
-          <div class="space-y-2">
-            <label class="text-sm font-medium">E-Mail</label>
-            <input v-model="form.email" type="email" class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring" placeholder="max@beispiel.de" />
+
+          <button
+            type="button"
+            class="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            @click="showInviteDialog = false"
+          >
+            <X class="h-5 w-5" />
+          </button>
+        </div>
+
+        <div class="mt-5 space-y-2">
+          <label class="text-sm font-medium">Registrierungslink</label>
+
+          <div class="flex gap-2">
+            <input
+              :value="inviteLink"
+              readonly
+              class="w-full rounded-md border border-border bg-input px-3 py-2 text-sm outline-none"
+            />
+
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              @click="copyInviteLink"
+            >
+              <Copy class="h-4 w-4" />
+              Kopieren
+            </button>
           </div>
-          <div class="space-y-2">
-            <label class="text-sm font-medium">Rolle</label>
-            <select v-model="form.role" class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring">
-              <option value="mitglied">Mitglied</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <div class="flex gap-3 pt-2">
-            <button type="button" class="flex-1 px-4 py-2 rounded-md border border-border text-sm font-medium hover:bg-muted transition-colors" @click="showDialog = false">Abbrechen</button>
-            <button type="submit" class="flex-1 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">Einladung senden</button>
-          </div>
-        </form>
+
+          <p v-if="copied" class="text-sm text-green-600">
+            Link wurde kopiert.
+          </p>
+        </div>
+
+        <div class="mt-6 flex justify-end">
+          <button
+            type="button"
+            class="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+            @click="showInviteDialog = false"
+          >
+            Schließen
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { Plus, Crown, User } from 'lucide-vue-next'
+import { computed, ref } from 'vue'
+import {
+  UserPlus,
+  Crown,
+  User,
+  Copy,
+  X,
+} from 'lucide-vue-next'
 
 defineProps({
   members: {
@@ -77,44 +133,19 @@ defineProps({
   },
 })
 
-const emit = defineEmits(['addMember'])
+const showInviteDialog = ref(false)
+const copied = ref(false)
 
-const showDialog = ref(false)
-
-const form = ref({
-  name: '',
-  email: '',
-  role: 'mitglied',
+const inviteLink = computed(() => {
+  return `${window.location.origin}/registrieren`
 })
 
-function handleSubmit() {
-  if (!form.value.name || !form.value.email) {
-    return
-  }
+async function copyInviteLink() {
+  await navigator.clipboard.writeText(inviteLink.value)
+  copied.value = true
 
-  emit('addMember', {
-    name: form.value.name,
-    email: form.value.email,
-    role: form.value.role,
-  })
-
-  form.value = {
-    name: '',
-    email: '',
-    role: 'mitglied',
-  }
-
-  showDialog.value = false
-}
-
-const colors = [
-  'bg-primary text-primary-foreground',
-  'bg-accent text-accent-foreground',
-  'bg-purple text-purple-foreground',
-  'bg-secondary text-secondary-foreground',
-]
-
-function getMemberColor(index) {
-  return colors[index % colors.length]
+  setTimeout(() => {
+    copied.value = false
+  }, 2000)
 }
 </script>

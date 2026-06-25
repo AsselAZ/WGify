@@ -17,32 +17,57 @@ export const useExpensesStore = defineStore('expenses', () => {
       expenses.value = response.data.map(expense => ({
         ...expense,
         id: String(expense.id),
+        amount: Number(expense.amount),
       }))
-    } catch (e) {
-      error.value = 'Ausgaben konnten nicht geladen werden'
-      console.error(e)
+    } catch (err) {
+      error.value = 'Ausgaben konnten nicht geladen werden.'
+      console.error(err)
     } finally {
       isLoading.value = false
     }
   }
 
   async function addExpense(expense) {
-    error.value = null
+    const response = await api.post('/expenses', expense)
 
-    try {
-      const response = await api.post('/expenses', expense)
+    expenses.value.unshift({
+      ...response.data,
+      id: String(response.data.id),
+      amount: Number(response.data.amount),
+    })
 
-      expenses.value.unshift({
-        ...response.data,
-        id: String(response.data.id),
-      })
-    } catch (e) {
-      error.value = 'Ausgabe konnte nicht gespeichert werden'
-      console.error(e)
-    }
+    return response.data
   }
 
-  const total = () => expenses.value.reduce((sum, expense) => sum + Number(expense.amount), 0)
+  async function updateExpense(id, expense) {
+    const response = await api.patch(`/expenses/${id}`, expense)
+
+    const updatedExpense = {
+      ...response.data,
+      id: String(response.data.id),
+      amount: Number(response.data.amount),
+    }
+
+    const index = expenses.value.findIndex(item => item.id === String(id))
+
+    if (index !== -1) {
+      expenses.value[index] = updatedExpense
+    }
+
+    return updatedExpense
+  }
+
+  async function deleteExpense(id) {
+    await api.delete(`/expenses/${id}`)
+
+    expenses.value = expenses.value.filter(expense => expense.id !== String(id))
+  }
+
+  function total() {
+    return expenses.value.reduce((sum, expense) => {
+      return sum + Number(expense.amount)
+    }, 0)
+  }
 
   return {
     expenses,
@@ -50,6 +75,8 @@ export const useExpensesStore = defineStore('expenses', () => {
     error,
     loadExpenses,
     addExpense,
+    updateExpense,
+    deleteExpense,
     total,
   }
 })

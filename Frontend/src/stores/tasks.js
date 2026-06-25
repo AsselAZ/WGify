@@ -61,6 +61,24 @@ export const useTasksStore = defineStore('tasks', () => {
       console.error(e)
     }
   }
+  //Tasks update
+  async function updateTask(id, task) {
+    const response = await api.patch(`/tasks/${id}`, task)
+
+    const index = tasks.value.findIndex(item => item.id === id)
+
+    if (index !== -1) {
+      tasks.value[index] = response.data
+    }
+
+    return response.data
+  }
+
+  async function deleteTask(id) {
+    await api.delete(`/tasks/${id}`)
+
+    tasks.value = tasks.value.filter(task => task.id !== id)
+  }
 
   return {
     tasks,
@@ -69,5 +87,7 @@ export const useTasksStore = defineStore('tasks', () => {
     loadTasks,
     addTask,
     toggleStatus,
+    updateTask,
+    deleteTask,
   }
 })

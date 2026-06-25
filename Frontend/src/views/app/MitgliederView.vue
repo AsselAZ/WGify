@@ -49,7 +49,6 @@
         <MemberList
           v-else
           :members="members"
-          @add-member="handleAddMember"
         />
       </div>
     </div>
@@ -86,7 +85,4 @@ const regularCount = computed(() => {
   return members.value.filter(member => member.role !== 'admin').length
 })
 
-function handleAddMember() {
-  alert('Neue Mitglieder werden aktuell über die Registrierung angelegt.')
-}
 </script>
