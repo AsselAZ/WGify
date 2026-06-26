@@ -34,6 +34,8 @@ $userPayload = function (User $user) {
         'apartment' => $user->apartment ? [
             'id' => (string) $user->apartment->id,
             'name' => $user->apartment->name,
+            'address' => $user->apartment->address,
+            'currency' => $user->apartment->currency,
             'inviteCode' => $user->apartment->invite_code,
         ] : null,
     ];
@@ -263,6 +265,34 @@ Route::delete('/tasks/{task}', function (Request $request, Task $task) use ($get
     ]);
 });
 
+// Apartment---------------------
+
+Route::patch('/apartment/settings', function (Request $request) use ($getCurrentUser, $userPayload) {
+    $currentUser = $getCurrentUser($request);
+
+    if (!$currentUser->apartment_id) {
+        abort(403, 'Du bist in keiner WG.');
+    }
+
+    if ($currentUser->role !== 'admin') {
+        abort(403, 'Nur Admins dürfen WG-Einstellungen ändern.');
+    }
+
+    $validated = $request->validate([
+        'address' => 'nullable|string|max:255',
+        'currency' => 'required|in:EUR,USD,CHF,GBP',
+    ]);
+
+    $currentUser->apartment->update([
+        'address' => $validated['address'],
+        'currency' => $validated['currency'],
+    ]);
+
+    return response()->json([
+        'message' => 'WG-Einstellungen wurden gespeichert.',
+        'user' => $userPayload($currentUser->fresh()),
+    ]);
+});
 
 // Auth ----------------------------------------------------------------
 

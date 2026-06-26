@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-//Ein USer kann nur eine WG haben
+
 return new class extends Migration
 {
     public function up(): void
@@ -14,10 +14,6 @@ return new class extends Migration
                 ->after('id')
                 ->constrained()
                 ->nullOnDelete();
-
-            $table->string('role')
-                ->default('mitglied')
-                ->after('password');
         });
     }
 
@@ -25,7 +21,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropForeign(['apartment_id']);
-            $table->dropColumn(['apartment_id', 'role']);
+            $table->dropColumn('apartment_id');
         });
     }
 };

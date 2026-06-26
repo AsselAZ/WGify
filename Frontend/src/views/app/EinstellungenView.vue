@@ -1,10 +1,10 @@
 <template>
   <div class="min-h-screen">
     <AppNavbar
-  	title="Einstellungen"
-  	subtitle="Verwalte dein Profil und die WG"
-  	:show-search="false"
-	/>
+      title="Einstellungen"
+      subtitle="Verwalte dein Profil und die WG"
+      :show-search="false"
+    />
 
     <div class="p-4 md:p-6 space-y-6 max-w-3xl">
       <!-- Profil -->
@@ -117,7 +117,9 @@
 
           <div>
             <h2 class="text-lg font-semibold">WG-Einstellungen</h2>
-            <p class="text-sm text-muted-foreground">Allgemeine WG-Informationen</p>
+            <p class="text-sm text-muted-foreground">
+              Allgemeine WG-Informationen
+            </p>
           </div>
         </div>
 
@@ -126,6 +128,7 @@
             <label class="text-sm font-medium">WG-Name</label>
             <input
               v-model="wg.name"
+              readonly
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
@@ -134,7 +137,8 @@
             <label class="text-sm font-medium">Adresse</label>
             <input
               v-model="wg.address"
-              class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
+              :readonly="!isAdmin"
+              class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
             />
           </div>
 
@@ -142,13 +146,22 @@
             <label class="text-sm font-medium">Währung</label>
             <select
               v-model="wg.currency"
-              class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
+              :disabled="!isAdmin"
+              class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
             >
               <option value="EUR">Euro (EUR)</option>
-              <option value="USD">US Dollar ($)</option>
+              <option value="USD">US Dollar (USD)</option>
               <option value="CHF">Schweizer Franken (CHF)</option>
+              <option value="GBP">Britisches Pfund (GBP)</option>
             </select>
           </div>
+
+          <p
+            v-if="!isAdmin"
+            class="text-xs text-muted-foreground"
+          >
+            Nur Admins können Adresse und Währung ändern.
+          </p>
         </div>
       </div>
 
@@ -204,6 +217,10 @@
             {{ saveMessage }}
           </p>
 
+          <p v-if="errorMessage" class="text-sm text-red-600">
+            {{ errorMessage }}
+          </p>
+
           <button
             type="button"
             class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
@@ -219,12 +236,16 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { User, Lock, Home, Bell, Save } from 'lucide-vue-next'
 import AppNavbar from '@/components/AppNavbar.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
+
+const isAdmin = computed(() => {
+  return authStore.currentUser?.role === 'admin'
+})
 
 const profile = reactive({
   name: '',
@@ -233,8 +254,8 @@ const profile = reactive({
 })
 
 const wg = reactive({
-  name: 'Muster-WG',
-  address: 'Musterstrasse 123, 12345 Berlin',
+  name: '',
+  address: '',
   currency: 'EUR',
 })
 
@@ -246,76 +267,110 @@ const notifs = reactive({
 })
 
 const saveMessage = ref('')
+const errorMessage = ref('')
 
 const notifItems = [
   {
-    key: 'email' ,
+    key: 'email',
     label: 'E-Mail Benachrichtigungen',
     desc: 'Erhalte Updates per E-Mail',
   },
   {
-    key: 'push' ,
+    key: 'push',
     label: 'Push Benachrichtigungen',
     desc: 'Browser Push-Nachrichten',
   },
   {
-    key: 'tasks' ,
+    key: 'tasks',
     label: 'Aufgaben-Erinnerungen',
     desc: 'Erinnerungen für anstehende Aufgaben',
   },
   {
-    key: 'expenses' ,
+    key: 'expenses',
     label: 'Ausgaben-Updates',
     desc: 'Benachrichtigungen bei neuen Ausgaben',
   },
 ]
 
+function loadProfileData() {
+  profile.name = authStore.currentUser?.name || ''
+  profile.email = authStore.currentUser?.email || ''
+  profile.avatar =
+    authStore.currentUser?.avatar ||
+    authStore.currentUser?.name?.charAt(0).toUpperCase() ||
+    ''
+}
+
+function loadApartmentData() {
+  wg.name = authStore.currentUser?.apartment?.name || ''
+  wg.address = authStore.currentUser?.apartment?.address || ''
+  wg.currency = authStore.currentUser?.apartment?.currency || 'EUR'
+}
+
 onMounted(() => {
   authStore.loadUser()
+  loadProfileData()
+  loadApartmentData()
 
   const savedSettings = localStorage.getItem('settings')
 
   if (savedSettings) {
     const settings = JSON.parse(savedSettings)
 
-    Object.assign(profile, settings.profile)
-    Object.assign(wg, settings.wg)
-    Object.assign(notifs, settings.notifs)
-  } else if (authStore.currentUser) {
-    profile.name = authStore.currentUser.name
-    profile.email = authStore.currentUser.email
-    profile.avatar = authStore.currentUser.avatar
+    if (settings.notifs) {
+      Object.assign(notifs, settings.notifs)
+    }
   }
 })
 
-function saveSettings() {
+async function saveSettings() {
+  errorMessage.value = ''
+  saveMessage.value = ''
+
   profile.avatar = profile.name.charAt(0).toUpperCase()
 
-  localStorage.setItem(
-    'settings',
-    JSON.stringify({
-      profile,
-      wg,
-      notifs,
-    })
-  )
+  try {
+    let savedUser = authStore.currentUser
 
-  if (authStore.currentUser) {
-    const updatedUser = {
-      ...authStore.currentUser,
-      name: profile.name,
-      email: profile.email,
-      avatar: profile.avatar,
+    if (isAdmin.value) {
+      savedUser = await authStore.updateApartmentSettings({
+        address: wg.address,
+        currency: wg.currency,
+      })
     }
 
-    authStore.currentUser = updatedUser
-    localStorage.setItem('currentUser', JSON.stringify(updatedUser))
+    if (savedUser) {
+      const finalUser = {
+        ...savedUser,
+        name: profile.name,
+        email: profile.email,
+        avatar: profile.avatar,
+      }
+
+      authStore.currentUser = finalUser
+      localStorage.setItem('currentUser', JSON.stringify(finalUser))
+
+      wg.name = finalUser.apartment?.name || ''
+      wg.address = finalUser.apartment?.address || ''
+      wg.currency = finalUser.apartment?.currency || 'EUR'
+    }
+
+    localStorage.setItem(
+      'settings',
+      JSON.stringify({
+        notifs,
+      })
+    )
+
+    saveMessage.value = 'Änderungen wurden gespeichert.'
+
+    setTimeout(() => {
+      saveMessage.value = ''
+    }, 2000)
+  } catch (error) {
+    errorMessage.value =
+      error.response?.data?.message || 'Einstellungen konnten nicht gespeichert werden.'
   }
-
-  saveMessage.value = 'Änderungen wurden gespeichert.'
-
-  setTimeout(() => {
-    saveMessage.value = ''
-  }, 2000)
 }
+
 </script>

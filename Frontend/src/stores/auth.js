@@ -36,6 +36,17 @@ export const useAuthStore = defineStore('auth', () => {
       password,
     })
 
+    
+
+    currentUser.value = response.data.user
+    localStorage.setItem('currentUser', JSON.stringify(response.data.user))
+
+    return response.data.user
+  }
+
+  async function updateApartmentSettings(settings) {
+    const response = await api.patch('/apartment/settings', settings)
+
     currentUser.value = response.data.user
     localStorage.setItem('currentUser', JSON.stringify(response.data.user))
 
@@ -48,6 +59,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
+    updateApartmentSettings,
     currentUser,
     loadUser,
     register,
