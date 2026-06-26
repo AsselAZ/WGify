@@ -2,7 +2,7 @@
   <div class="min-h-screen">
     <AppNavbar
       title="Aufgaben"
-      subtitle="Verwalte Aufgaben und Putzpläne"
+      subtitle="Verwalte alle WG-Aufgaben"
       :search="searchQuery"
       @update:search="searchQuery = $event"
     />
@@ -89,16 +89,26 @@ onMounted(() => {
 const filteredTasks = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
 
-  if (!query) {
-    return store.tasks
+  let tasks = store.tasks
+
+  if (query) {
+    tasks = tasks.filter(task =>
+      task.title.toLowerCase().includes(query) ||
+      task.assignedTo.toLowerCase().includes(query) ||
+      task.dueDate.toLowerCase().includes(query) ||
+      task.status.toLowerCase().includes(query)
+    )
   }
 
-  return store.tasks.filter(task =>
-    task.title.toLowerCase().includes(query) ||
-    task.assignedTo.toLowerCase().includes(query) ||
-    task.dueDate.toLowerCase().includes(query) ||
-    task.status.toLowerCase().includes(query)
-  )
+  // Die Tasks sortieren - Erst nach Status, dann nach Fälligkeitsdatum sortieren 
+  return [...tasks].sort((a, b) => {
+    // Offene Aufgaben vor erledigten
+    if (a.status !== b.status) {
+      return a.status === 'offen' ? -1 : 1
+    }
+    // Innerhalb des Status nach Deadline
+    return new Date(a.dueDate) - new Date(b.dueDate)
+  })
 })
 
 const openCount = computed(() => {

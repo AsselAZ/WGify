@@ -72,18 +72,22 @@ onMounted(() => {
 
 const filteredExpenses = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
+  let expenses = store.expenses
 
-  if (!query) {
-    return store.expenses
+  if (query) {
+    expenses = expenses.filter(expense =>
+      expense.title.toLowerCase().includes(query) ||
+      expense.category.toLowerCase().includes(query) ||
+      expense.paidBy.toLowerCase().includes(query) ||
+      expense.date.toLowerCase().includes(query) ||
+      String(expense.amount).includes(query)
+    )
   }
 
-  return store.expenses.filter(expense =>
-    expense.title.toLowerCase().includes(query) ||
-    expense.category.toLowerCase().includes(query) ||
-    expense.paidBy.toLowerCase().includes(query) ||
-    expense.date.toLowerCase().includes(query) ||
-    String(expense.amount).includes(query)
-  )
+  // Sortierung: neueste Ausgaben zuerst
+  return [...expenses].sort((a, b) => {
+    return new Date(b.date) - new Date(a.date)
+  })
 })
 
 const totalExpenses = computed(() =>
