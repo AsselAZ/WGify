@@ -44,6 +44,15 @@
           <User v-else class="h-3 w-3" />
           {{ member.role === 'admin' ? 'Admin' : 'Mitglied' }}
         </div>
+        <button
+          v-if="isAdmin && String(member.id) !== currentUserId"
+          type="button"
+          class="rounded-md p-2 text-red-600 hover:bg-red-50 transition-colors"
+          title="Mitglied entfernen"
+          @click="removeMember(member)"
+        >
+          <Trash2 class="h-4 w-4" />
+        </button>
       </div>
 
       <p
@@ -122,7 +131,10 @@ import {
   Crown,
   User,
   X,
+  Trash2,
 } from 'lucide-vue-next'
+
+import { useAuthStore } from '@/stores/auth'
 
 defineProps({
   members: {
@@ -133,6 +145,28 @@ defineProps({
 
 const showInviteDialog = ref(false)
 const copied = ref(false)
+
+const emit = defineEmits(['removeMember'])
+
+const authStore = useAuthStore()
+
+const isAdmin = computed(() => {
+  return authStore.currentUser?.role === 'admin'
+})
+
+const currentUserId = computed(() => {
+  return String(authStore.currentUser?.id || '')
+})
+
+function removeMember(member) {
+  const confirmed = confirm(`${member.name} wirklich aus der WG entfernen?`)
+
+  if (!confirmed) {
+    return
+  }
+
+  emit('removeMember', member.id)
+}
 
 const currentUser = computed(() => {
   const savedUser = localStorage.getItem('currentUser')

@@ -76,9 +76,13 @@ async function handleSubmit() {
   errorMessage.value = ''
 
   try {
-    await authStore.login(email.value, password.value)
+    const user = await authStore.login(email.value, password.value)
 
-    router.push('/app/dashboard')
+    if (user.apartment_id) {
+      router.push('/app/dashboard')
+    } else {
+      router.push('/wg-auswahl')
+    }
   } catch (error) {
     if (error.response?.status === 422) {
       errorMessage.value = 'E-Mail oder Passwort ist falsch.'

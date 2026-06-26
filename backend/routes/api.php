@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\Expense;
-use App\Models\Task; //Damit Laravel die Klasse Task kennt
+use App\Models\Task;
 use App\Models\User;
 use App\Models\Apartment;
 use Illuminate\Http\Request;
@@ -9,8 +9,6 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-
-
 
 $getCurrentUser = function (Request $request) {
     $userId = $request->header('X-User-Id');
@@ -146,7 +144,6 @@ Route::delete('/expenses/{expense}', function (Request $request, Expense $expens
     ]);
 });
 
-
 // Aufgaben ----------------------------------------------------------------
 
 Route::get('/tasks', function (Request $request) use ($getCurrentUser) {
@@ -265,7 +262,7 @@ Route::delete('/tasks/{task}', function (Request $request, Task $task) use ($get
     ]);
 });
 
-// Apartment---------------------
+// Apartment ----------------------------------------------------------------
 
 Route::patch('/apartment/settings', function (Request $request) use ($getCurrentUser, $userPayload) {
     $currentUser = $getCurrentUser($request);
@@ -284,12 +281,82 @@ Route::patch('/apartment/settings', function (Request $request) use ($getCurrent
     ]);
 
     $currentUser->apartment->update([
-        'address' => $validated['address'],
+        'address' => $validated['address'] ?? null,
         'currency' => $validated['currency'],
     ]);
 
     return response()->json([
         'message' => 'WG-Einstellungen wurden gespeichert.',
+        'user' => $userPayload($currentUser->fresh()),
+    ]);
+});
+
+Route::post('/apartments/create', function (Request $request) use ($getCurrentUser, $userPayload) {
+    $currentUser = $getCurrentUser($request);
+
+    if ($currentUser->apartment_id) {
+        throw ValidationException::withMessages([
+            'apartment' => ['Du bist bereits in einer WG.'],
+        ]);
+    }
+
+    $validated = $request->validate([
+        'apartmentName' => 'required|string|max:255',
+    ]);
+
+    do {
+        $inviteCode = strtoupper(Str::random(6));
+    } while (Apartment::where('invite_code', $inviteCode)->exists());
+
+    $apartment = Apartment::create([
+        'name' => $validated['apartmentName'],
+        'currency' => 'EUR',
+        'invite_code' => $inviteCode,
+    ]);
+
+    $currentUser->update([
+        'apartment_id' => $apartment->id,
+        'role' => 'admin',
+    ]);
+
+    return response()->json([
+        'message' => 'WG wurde erstellt.',
+        'user' => $userPayload($currentUser->fresh()),
+    ], 201);
+});
+
+Route::post('/apartments/join', function (Request $request) use ($getCurrentUser, $userPayload) {
+    $currentUser = $getCurrentUser($request);
+
+    if ($currentUser->apartment_id) {
+        throw ValidationException::withMessages([
+            'apartment' => ['Du bist bereits in einer WG.'],
+        ]);
+    }
+
+    $request->merge([
+        'inviteCode' => $request->inviteCode ? strtoupper(trim($request->inviteCode)) : null,
+    ]);
+
+    $validated = $request->validate([
+        'inviteCode' => 'required|string|max:20',
+    ]);
+
+    $apartment = Apartment::where('invite_code', $validated['inviteCode'])->first();
+
+    if (!$apartment) {
+        throw ValidationException::withMessages([
+            'inviteCode' => ['Dieser Einladungscode ist ungültig.'],
+        ]);
+    }
+
+    $currentUser->update([
+        'apartment_id' => $apartment->id,
+        'role' => 'mitglied',
+    ]);
+
+    return response()->json([
+        'message' => 'Du bist der WG beigetreten.',
         'user' => $userPayload($currentUser->fresh()),
     ]);
 });
@@ -318,6 +385,7 @@ Route::post('/register', function (Request $request) use ($userPayload) {
 
         $apartment = Apartment::create([
             'name' => $validated['apartmentName'],
+            'currency' => 'EUR',
             'invite_code' => $inviteCode,
         ]);
 
@@ -395,7 +463,39 @@ Route::get('/members', function (Request $request) use ($getCurrentUser) {
         });
 });
 
-// WG verlassen ------------------------------
+Route::delete('/members/{member}', function (Request $request, User $member) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
+
+    if (!$currentUser->apartment_id) {
+        abort(403, 'Du bist in keiner WG.');
+    }
+
+    if ($currentUser->role !== 'admin') {
+        abort(403, 'Nur Admins dürfen Mitglieder entfernen.');
+    }
+
+    if ($member->id === $currentUser->id) {
+        throw ValidationException::withMessages([
+            'member' => ['Du kannst dich hier nicht selbst entfernen. Nutze dafür WG verlassen.'],
+        ]);
+    }
+
+    if ($member->apartment_id !== $currentUser->apartment_id) {
+        abort(403, 'Dieses Mitglied gehört nicht zu deiner WG.');
+    }
+
+    $member->update([
+        'apartment_id' => null,
+        'role' => 'mitglied',
+    ]);
+
+    return response()->json([
+        'message' => 'Mitglied wurde aus der WG entfernt.',
+    ]);
+});
+
+// WG verlassen --------------------------------------------------------------
+
 Route::post('/apartments/leave', function (Request $request) use ($getCurrentUser, $userPayload) {
     $user = $getCurrentUser($request);
 

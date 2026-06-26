@@ -7,6 +7,12 @@ export const useMembersStore = defineStore('members', () => {
   const isLoading = ref(false)
   const error = ref(null)
 
+  async function removeMember(id) {
+    await api.delete(`/members/${id}`)
+
+    members.value = members.value.filter((member) => member.id !== id)
+  }
+
   async function loadMembers() {
     isLoading.value = true
     error.value = null
@@ -27,5 +33,6 @@ export const useMembersStore = defineStore('members', () => {
     isLoading,
     error,
     loadMembers,
+    removeMember,
   }
 })

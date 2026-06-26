@@ -47,8 +47,9 @@
         </p>
 
         <MemberList
-          v-else
           :members="members"
+          @remove-member="membersStore.removeMember"
+          v-else
         />
       </div>
     </div>

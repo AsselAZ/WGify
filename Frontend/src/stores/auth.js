@@ -36,12 +36,41 @@ export const useAuthStore = defineStore('auth', () => {
       password,
     })
 
-    
-
     currentUser.value = response.data.user
     localStorage.setItem('currentUser', JSON.stringify(response.data.user))
 
     return response.data.user
+  }
+
+  async function createApartment(apartmentName) {
+    const response = await api.post('/apartments/create', {
+      apartmentName,
+    })
+
+    currentUser.value = response.data.user
+    localStorage.setItem('currentUser', JSON.stringify(response.data.user))
+
+    return response.data
+  }
+
+  async function joinApartment(inviteCode) {
+    const response = await api.post('/apartments/join', {
+      inviteCode,
+    })
+
+    currentUser.value = response.data.user
+    localStorage.setItem('currentUser', JSON.stringify(response.data.user))
+
+    return response.data
+  }
+
+  async function leaveApartment() {
+    const response = await api.post('/apartments/leave')
+
+    currentUser.value = response.data.user
+    localStorage.setItem('currentUser', JSON.stringify(response.data.user))
+
+    return response.data
   }
 
   async function updateApartmentSettings(settings) {
@@ -59,11 +88,14 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    updateApartmentSettings,
     currentUser,
     loadUser,
     register,
     login,
     logout,
+    createApartment,
+    joinApartment,
+    leaveApartment,
+    updateApartmentSettings,
   }
 })

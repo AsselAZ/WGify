@@ -1,5 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+function getSavedUser() {
+  const savedUser = localStorage.getItem('currentUser')
+
+  if (!savedUser) {
+    return null
+  }
+
+  return JSON.parse(savedUser)
+}
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -16,6 +26,10 @@ const router = createRouter({
       component: () => import('@/views/RegisterView.vue'),
     },
     {
+      path: '/wg-auswahl',
+      component: () => import('@/views/ApartmentSetupView.vue'),
+    },
+    {
       path: '/app',
       component: () => import('@/views/app/AppLayout.vue'),
       children: [
@@ -28,6 +42,28 @@ const router = createRouter({
       ],
     },
   ],
+})
+
+router.beforeEach((to) => {
+  const user = getSavedUser()
+
+  if (to.path.startsWith('/app') && !user) {
+    return '/login'
+  }
+
+  if (to.path.startsWith('/app') && user && !user.apartment_id) {
+    return '/wg-auswahl'
+  }
+
+  if (to.path === '/wg-auswahl' && !user) {
+    return '/login'
+  }
+
+  if (to.path === '/wg-auswahl' && user?.apartment_id) {
+    return '/app/dashboard'
+  }
+
+  return true
 })
 
 export default router

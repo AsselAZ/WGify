@@ -109,7 +109,10 @@
       </div>
 
       <!-- WG-Einstellungen -->
-      <div class="rounded-xl border border-border bg-card p-6">
+      <div
+        v-if="hasApartment"
+        class="rounded-xl border border-border bg-card p-6"
+      >
         <div class="flex items-center gap-3 mb-6">
           <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/50">
             <Home class="h-5 w-5 text-primary" />
@@ -231,20 +234,48 @@
           </button>
         </div>
       </div>
+
+      <!-- Achtung -->
+      <div
+        v-if="hasApartment"
+        class="rounded-xl border border-red-200 bg-red-50 p-6"
+      >
+        <h2 class="text-lg font-semibold text-red-700">
+          Achtung!
+        </h2>
+
+        <p class="mt-1 text-sm text-red-600">
+          Du kannst die WG verlassen. Wenn du Admin bist, dann wird automatisch ein anderes Mitglied Admin.
+        </p>
+
+        <button
+          type="button"
+          class="mt-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+          @click="leaveApartment"
+        >
+          WG verlassen
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { User, Lock, Home, Bell, Save } from 'lucide-vue-next'
 import AppNavbar from '@/components/AppNavbar.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
+const router = useRouter()
 
 const isAdmin = computed(() => {
   return authStore.currentUser?.role === 'admin'
+})
+
+const hasApartment = computed(() => {
+  return !!authStore.currentUser?.apartment_id
 })
 
 const profile = reactive({
@@ -309,6 +340,12 @@ function loadApartmentData() {
 
 onMounted(() => {
   authStore.loadUser()
+
+  if (!authStore.currentUser) {
+    router.push('/login')
+    return
+  }
+
   loadProfileData()
   loadApartmentData()
 
@@ -322,6 +359,28 @@ onMounted(() => {
     }
   }
 })
+
+async function leaveApartment() {
+  const confirmed = confirm('Möchtest du diese WG wirklich verlassen?')
+
+  if (!confirmed) {
+    return
+  }
+
+  try {
+    const response = await authStore.leaveApartment()
+
+    localStorage.removeItem('settings')
+    loadApartmentData()
+
+    saveMessage.value = response.message || 'Du hast die WG verlassen.'
+
+    router.push('/wg-auswahl')
+  } catch (error) {
+    errorMessage.value =
+      error.response?.data?.message || 'WG konnte nicht verlassen werden.'
+  }
+}
 
 async function saveSettings() {
   errorMessage.value = ''
@@ -372,5 +431,4 @@ async function saveSettings() {
       error.response?.data?.message || 'Einstellungen konnten nicht gespeichert werden.'
   }
 }
-
 </script>
