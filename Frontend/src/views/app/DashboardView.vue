@@ -161,18 +161,22 @@ const avgPerPerson = computed(() =>
 
 const filteredExpenses = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
+  let expenses = expensesStore.expenses
 
-  if (!query) {
-    return expensesStore.expenses
+  if (query) {
+    expenses = expenses.filter(expense =>
+      expense.title.toLowerCase().includes(query) ||
+      expense.category.toLowerCase().includes(query) ||
+      expense.paidBy.toLowerCase().includes(query) ||
+      expense.date.toLowerCase().includes(query) ||
+      String(expense.amount).includes(query)
+    )
   }
 
-  return expensesStore.expenses.filter(expense =>
-    expense.title.toLowerCase().includes(query) ||
-    expense.category.toLowerCase().includes(query) ||
-    expense.paidBy.toLowerCase().includes(query) ||
-    expense.date.toLowerCase().includes(query) ||
-    String(expense.amount).includes(query)
-  )
+  // Sortierung: neueste zuerst
+  return [...expenses].sort((a, b) => {
+    return new Date(b.date) - new Date(a.date)
+  })
 })
 
 const filteredTasks = computed(() => {
@@ -190,9 +194,14 @@ const filteredTasks = computed(() => {
   )
 })
 
-const openTasks = computed(() =>
-  filteredTasks.value.filter(task => task.status === 'offen')
-)
+const openTasks = computed(() => {
+  // Die Tasks sortieren - Erst nach Status, dann nach Fälligkeitsdatum sortieren 
+  return filteredTasks.value
+    .filter(task => task.status === 'offen')
+    .sort((a, b) => {
+      return new Date(a.dueDate) - new Date(b.dueDate)
+    })
+})
 
 const openTasksCount = computed(() => openTasks.value.length)
 
