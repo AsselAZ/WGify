@@ -186,9 +186,19 @@
       </div>
     </div>
   </div>
+  <AppConfirmDialog
+    v-model="showDeleteDialog"
+    title="Ausgabe löschen?"
+    :message="`Möchtest du die Ausgabe '${selectedExpense?.title || ''}' wirklich löschen?`"
+    confirm-text="Löschen"
+    cancel-text="Abbrechen"
+    @confirm="confirmDeleteExpense"
+  />
+
 </template>
 
 <script setup>
+import AppConfirmDialog from '@/components/AppConfirmDialog.vue'
 import { ref } from 'vue'
 import {
   Plus,
@@ -207,6 +217,8 @@ defineProps({
   },
 })
 
+
+
 const emit = defineEmits([
   'addExpense',
   'updateExpense',
@@ -224,6 +236,8 @@ const categories = [
 
 const showDialog = ref(false)
 const editingExpenseId = ref(null)
+const showDeleteDialog = ref(false)
+const selectedExpense = ref(null)
 
 const form = ref({
   title: '',
@@ -285,11 +299,17 @@ function handleSubmit() {
 }
 
 function deleteExpense(expense) {
-  const confirmed = confirm(`Ausgabe "${expense.title}" wirklich löschen?`)
+  selectedExpense.value = expense
+  showDeleteDialog.value = true
+}
 
-  if (confirmed) {
-    emit('deleteExpense', expense.id)
+function confirmDeleteExpense() {
+  if (!selectedExpense.value) {
+    return
   }
+
+  emit('deleteExpense', selectedExpense.value.id)
+  selectedExpense.value = null
 }
 
 function getCategoryColor(category) {

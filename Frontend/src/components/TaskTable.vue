@@ -187,9 +187,18 @@
       </div>
     </div>
   </div>
+  <AppConfirmDialog
+    v-model="showDeleteDialog"
+    title="Aufgabe löschen?"
+    :message="`Möchtest du die Aufgabe '${selectedTask?.title || ''}' wirklich löschen?`"
+    confirm-text="Löschen"
+    cancel-text="Abbrechen"
+    @confirm="confirmDeleteTask"
+  />
 </template>
 
 <script setup>
+import AppConfirmDialog from '@/components/AppConfirmDialog.vue'
 import { ref } from 'vue'
 import {
   Plus,
@@ -219,6 +228,8 @@ const emit = defineEmits([
 
 const showDialog = ref(false)
 const editingTaskId = ref(null)
+const showDeleteDialog = ref(false)
+const selectedTask = ref(null)
 
 const form = ref({
   title: '',
@@ -280,13 +291,17 @@ function handleSubmit() {
 }
 
 function deleteTask(task) {
-  const confirmed = confirm(`Aufgabe "${task.title}" wirklich löschen?`)
+  selectedTask.value = task
+  showDeleteDialog.value = true
+}
 
-  if (!confirmed) {
+function confirmDeleteTask() {
+  if (!selectedTask.value) {
     return
   }
 
-  emit('deleteTask', task.id)
+  emit('deleteTask', selectedTask.value.id)
+  selectedTask.value = null
 }
 
 function formatDate(date) {
