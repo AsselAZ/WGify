@@ -382,7 +382,7 @@ Route::post('/apartments/invite', function (Request $request) use ($getCurrentUs
     $apartment = $currentUser->apartment;
 
     Mail::to($validated['email'])
-        ->send(new ApartmentInviteMail($apartment->invite_code));
+        ->send(new ApartmentInviteMail($apartment->invite_code, $apartment->name));
 
     return response()->json([
         'message' => 'Einladung wurde gesendet.',

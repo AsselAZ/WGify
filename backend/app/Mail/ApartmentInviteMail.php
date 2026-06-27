@@ -10,7 +10,8 @@ class ApartmentInviteMail extends Mailable
     use Queueable, SerializesModels;
 
     public function __construct(
-        public string $inviteCode
+        public string $inviteCode,
+        public string $apartmentName
     ) {}
 
     public function build()
