@@ -54,9 +54,6 @@
           />
         </div>
 
-        <p v-if="errorMessage" class="text-sm text-red-600">
-          {{ errorMessage }}
-        </p>
 
         <button
           type="submit"
@@ -81,6 +78,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -88,7 +86,7 @@ const authStore = useAuthStore()
 const mode = ref('join')
 const apartmentName = ref('')
 const inviteCode = ref('')
-const errorMessage = ref('')
+const toast = useToastStore()
 
 const appHome = '/app/dashboard'
 
@@ -106,25 +104,27 @@ onMounted(() => {
 })
 
 async function submit() {
-  errorMessage.value = ''
-
   try {
     if (mode.value === 'create') {
       await authStore.createApartment(apartmentName.value)
+      toast.success('WG erstellt', 'Du wurdest erfolgreich als Admin hinzugefügt.')
     } else {
       await authStore.joinApartment(inviteCode.value)
+      toast.success('WG beigetreten', 'Du bist der WG erfolgreich beigetreten.')
     }
 
     router.push(appHome)
   } catch (error) {
     const errors = error.response?.data?.errors
 
-    errorMessage.value =
+    toast.error(
+      'Aktion fehlgeschlagen',
       errors?.apartmentName?.[0] ||
-      errors?.inviteCode?.[0] ||
-      errors?.apartment?.[0] ||
-      error.response?.data?.message ||
-      'Aktion fehlgeschlagen.'
+        errors?.inviteCode?.[0] ||
+        errors?.apartment?.[0] ||
+        error.response?.data?.message ||
+        'Bitte versuche es erneut.'
+    )
   }
 }
 

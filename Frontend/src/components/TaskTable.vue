@@ -38,7 +38,7 @@
               <input
                 type="checkbox"
                 :checked="task.status === 'erledigt'"
-                @change="emit('toggleStatus', task.id)"
+                @change="toggleStatus(task)"
                 class="w-4 h-4 rounded border-border accent-primary cursor-pointer"
               />
             </td>
@@ -61,18 +61,20 @@
             </td>
 
             <td class="px-4 py-3">
-              <span
+              <button
+                type="button"
                 :class="[
-                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
+                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
                   task.status === 'erledigt'
-                    ? 'bg-accent/50 text-accent-foreground'
-                    : 'bg-warning/20 text-warning-foreground'
+                    ? 'bg-accent/50 text-accent-foreground hover:bg-accent/70'
+                    : 'bg-warning/20 text-warning-foreground hover:bg-warning/30'
                 ]"
+                @click="toggleStatus(task)"
               >
                 <CheckCircle2 v-if="task.status === 'erledigt'" class="h-3 w-3" />
                 <Circle v-else class="h-3 w-3" />
                 {{ task.status === 'erledigt' ? 'Erledigt' : 'Offen' }}
-              </span>
+              </button>
             </td>
 
             <td class="px-4 py-3">
@@ -117,14 +119,15 @@
           {{ editingTaskId ? 'Aufgabe bearbeiten' : 'Neue Aufgabe hinzufügen' }}
         </h3>
 
-        <form class="space-y-4" @submit.prevent="handleSubmit">
+        <form class="space-y-4" @submit.prevent="handleSubmit" novalidate>
+          
           <div class="space-y-2">
             <label class="text-sm font-medium">Aufgabe</label>
             <input
               v-model="form.title"
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
               placeholder="z.B. Küche putzen"
-              required
+              
             />
           </div>
 
@@ -133,7 +136,7 @@
             <select
               v-model="form.assignedTo"
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
-              required
+              
             >
               <option value="">Person wählen</option>
               <option
@@ -152,7 +155,7 @@
               v-model="form.dueDate"
               type="date"
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
-              required
+              
             />
           </div>
 
@@ -166,7 +169,12 @@
               <option value="erledigt">Erledigt</option>
             </select>
           </div>
-
+          <p
+  v-if="formError"
+  class="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600"
+>
+  {{ formError }}
+</p>
           <div class="flex gap-3 pt-2">
             <button
               type="button"
@@ -187,9 +195,18 @@
       </div>
     </div>
   </div>
+  <AppConfirmDialog
+    v-model="showDeleteDialog"
+    title="Aufgabe löschen?"
+    :message="`Möchtest du die Aufgabe '${selectedTask?.title || ''}' wirklich löschen?`"
+    confirm-text="Löschen"
+    cancel-text="Abbrechen"
+    @confirm="confirmDeleteTask"
+  />
 </template>
 
 <script setup>
+import AppConfirmDialog from '@/components/AppConfirmDialog.vue'
 import { ref } from 'vue'
 import {
   Plus,
@@ -211,14 +228,17 @@ defineProps({
 })
 
 const emit = defineEmits([
-  'addTask',
+  'createTask',
   'updateTask',
   'deleteTask',
-  'toggleStatus',
+  'toggleTaskStatus',
 ])
 
 const showDialog = ref(false)
 const editingTaskId = ref(null)
+const formError = ref('')
+const showDeleteDialog = ref(false)
+const selectedTask = ref(null)
 
 const form = ref({
   title: '',
@@ -259,7 +279,20 @@ function closeDialog() {
 }
 
 function handleSubmit() {
-  if (!form.value.title || !form.value.assignedTo || !form.value.dueDate) {
+  formError.value = ''
+
+  if (!form.value.title.trim()) {
+    formError.value = 'Bitte gib eine Aufgabe ein.'
+    return
+  }
+
+  if (!form.value.assignedTo) {
+    formError.value = 'Bitte wähle eine zuständige Person aus.'
+    return
+  }
+
+  if (!form.value.dueDate) {
+    formError.value = 'Bitte wähle ein Fälligkeitsdatum aus.'
     return
   }
 
@@ -273,20 +306,26 @@ function handleSubmit() {
   if (editingTaskId.value) {
     emit('updateTask', editingTaskId.value, payload)
   } else {
-    emit('addTask', payload)
+    emit('createTask', payload)
   }
 
   closeDialog()
 }
 
 function deleteTask(task) {
-  const confirmed = confirm(`Aufgabe "${task.title}" wirklich löschen?`)
+  selectedTask.value = task
+  showDeleteDialog.value = true
+}
 
-  if (!confirmed) {
-    return
-  }
+function toggleStatus(task) {
+  const nextStatus = task.status === 'erledigt' ? 'offen' : 'erledigt'
 
-  emit('deleteTask', task.id)
+  emit('toggleTaskStatus', task.id, {
+    title: task.title,
+    assignedTo: task.assignedTo,
+    dueDate: task.dueDate,
+    status: nextStatus,
+  })
 }
 
 function formatDate(date) {

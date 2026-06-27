@@ -157,9 +157,18 @@
       </div>
     </div>
   </div>
+  <AppConfirmDialog
+    v-model="showRemoveDialog"
+    title="Mitglied entfernen?"
+    :message="`${selectedMember?.name || 'Dieses Mitglied'} wird aus der WG entfernt und kann danach nicht mehr auf diese WG zugreifen.`"
+    confirm-text="Entfernen"
+    cancel-text="Abbrechen"
+    @confirm="confirmRemoveMember"
+  />
 </template>
 
 <script setup>
+import AppConfirmDialog from '@/components/AppConfirmDialog.vue'
 import { computed, ref } from 'vue'
 import {
   UserPlus,

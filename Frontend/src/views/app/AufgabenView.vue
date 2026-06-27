@@ -43,18 +43,13 @@
           Aufgaben werden geladen...
         </p>
 
-        <p v-else-if="store.error" class="text-sm text-red-500">
-          {{ store.error }}
-        </p>
-
         <TaskTable
-          v-else
           :tasks="filteredTasks"
           :members="membersStore.members"
-          @add-task="store.addTask"
-          @update-task="store.updateTask"
-          @delete-task="store.deleteTask"
-          @toggle-status="store.toggleStatus"
+          @create-task="createTask"
+          @update-task="updateTask"
+          @delete-task="deleteTask"
+          @toggle-task-status="toggleTaskStatus"
         />
       </div>
     </div>
@@ -63,6 +58,13 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useToastStore } from '@/stores/toast'
+import AppNavbar from '@/components/AppNavbar.vue'
+import DashboardCard from '@/components/DashboardCard.vue'
+import TaskTable from '@/components/TaskTable.vue'
+import { useTasksStore } from '@/stores/tasks'
+import { useMembersStore } from '@/stores/members'
+
 import {
   ListTodo,
   Clock,
@@ -70,14 +72,10 @@ import {
   AlertCircle,
 } from 'lucide-vue-next'
 
-import AppNavbar from '@/components/AppNavbar.vue'
-import DashboardCard from '@/components/DashboardCard.vue'
-import TaskTable from '@/components/TaskTable.vue'
-import { useTasksStore } from '@/stores/tasks'
-import { useMembersStore } from '@/stores/members'
 
 const store = useTasksStore()
 const membersStore = useMembersStore()
+const toast = useToastStore()
 
 const searchQuery = ref('')
 
@@ -126,4 +124,83 @@ const completionRate = computed(() => {
 
   return Math.round((doneCount.value / filteredTasks.value.length) * 100)
 })
+
+//Für Toasts!! ---------------------------
+
+async function createTask(task) {
+  try {
+    await store.addTask(task) 
+    toast.success(
+      'Aufgabe erstellt',
+      `Die Aufgabe "${task.title}" wurde erfolgreich gespeichert.`
+    )
+  } catch (error) {
+    toast.error(
+      'Speichern fehlgeschlagen',
+      error.response?.data?.message ||
+        `Die Aufgabe "${task.title}" konnte nicht gespeichert werden.`
+    )
+  }
+}
+
+async function updateTask(id, task) {
+  try {
+    await store.updateTask(id, task)
+
+    toast.success(
+      'Aufgabe gespeichert',
+      `Die Aufgabe "${task.title}" wurde erfolgreich gespeichert.`
+    )
+  } catch (error) {
+    toast.error(
+      'Speichern fehlgeschlagen',
+      error.response?.data?.message ||
+        `Die Aufgabe "${task.title}" konnte nicht gespeichert werden.`
+    )
+  }
+}
+
+async function deleteTask(id) {
+  const task = store.tasks.find((item) => item.id === id)
+
+  try {
+    await store.deleteTask(id)
+
+    toast.success(
+      'Aufgabe gelöscht',
+      `Die Aufgabe "${task?.title || 'Diese Aufgabe'}" wurde erfolgreich gelöscht.`
+    )
+  } catch (error) {
+    toast.error(
+      'Löschen fehlgeschlagen',
+      error.response?.data?.message ||
+        `Die Aufgabe "${task?.title || 'Diese Aufgabe'}" konnte nicht gelöscht werden.`
+    )
+  }
+}
+
+async function toggleTaskStatus(id, task) {
+  try {
+    await store.updateTask(id, task)
+
+    if (task.status === 'erledigt') {
+      toast.success(
+        'Aufgabe erledigt',
+        `Die Aufgabe "${task.title}" wurde als erledigt markiert.`
+      )
+    } else {
+      toast.info(
+        'Aufgabe wieder geöffnet',
+        `Die Aufgabe "${task.title}" wurde wieder als offen markiert.`
+      )
+    }
+  } catch (error) {
+    toast.error(
+      'Status konnte nicht geändert werden',
+      error.response?.data?.message ||
+        `Der Status der Aufgabe "${task.title}" konnte nicht geändert werden.`
+    )
+  }
+}
+
 </script>
