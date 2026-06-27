@@ -140,10 +140,6 @@
               />
             </div>
 
-            <p v-if="errorMessage" class="text-sm text-red-500">
-              {{ errorMessage }}
-            </p>
-
             <button
               type="submit"
               :disabled="isLoading"
@@ -177,12 +173,13 @@ import { RouterLink, useRouter } from 'vue-router'
 import { CheckCircle } from 'lucide-vue-next'
 import WGLogo from '@/components/WGifyLogo.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 const isLoading = ref(false)
-const errorMessage = ref('')
+const toast = useToastStore()
 
 const form = reactive({
   mode: 'create',
@@ -206,20 +203,19 @@ const submitLabel = computed(() => {
 })
 
 async function handleSubmit() {
-  errorMessage.value = ''
 
   if (form.password !== form.confirm) {
-    errorMessage.value = 'Die Passwörter stimmen nicht überein.'
+    toast.error('Registrierung fehlgeschlagen', 'Die Passwörter stimmen nicht überein.')
     return
   }
 
   if (form.mode === 'create' && !form.apartmentName.trim()) {
-    errorMessage.value = 'Bitte gib einen WG-Namen ein.'
+    toast.error('WG-Name fehlt', 'Bitte gib einen WG-Namen ein.')
     return
   }
 
   if (form.mode === 'join' && !form.inviteCode.trim()) {
-    errorMessage.value = 'Bitte gib einen Einladungscode ein.'
+    toast.error('Einladungscode fehlt', 'Bitte gib einen Einladungscode ein.')
     return
   }
 
@@ -235,22 +231,25 @@ async function handleSubmit() {
       apartmentName: form.apartmentName,
       inviteCode: form.inviteCode,
     })
+    toast.success('Registrierung erfolgreich', 'Dein Konto wurde erstellt.')
 
-    router.push('/app/dashboard')
+    router.push('/app/dashboard') //Erfolgereiche Registrierung
+
   } catch (error) {
     if (error.response?.status === 422) {
       const errors = error.response.data.errors
 
-      errorMessage.value =
+      toast.error(
+        'Registrierung fehlgeschlagen',
         errors?.email?.[0] ||
-        errors?.password?.[0] ||
-        errors?.name?.[0] ||
-        errors?.apartmentName?.[0] ||
-        errors?.inviteCode?.[0] ||
-        errors?.mode?.[0] ||
-        'Registrierung fehlgeschlagen.'
+          errors?.password?.[0] ||
+          errors?.apartmentName?.[0] ||
+          errors?.inviteCode?.[0] ||
+          error.response.data.message ||
+          'Bitte prüfe deine Eingaben.'
+      )
     } else {
-      errorMessage.value = 'Server nicht erreichbar.'
+      toast.error('Server nicht erreichbar', 'Bitte prüfe, ob das Backend läuft.')
     }
   } finally {
     isLoading.value = false

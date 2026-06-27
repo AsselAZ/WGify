@@ -145,19 +145,7 @@
             />
           </div>
 
-          <div class="space-y-2">
-            <label class="text-sm font-medium">Währung</label>
-            <select
-              v-model="wg.currency"
-              :disabled="!isAdmin"
-              class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
-            >
-              <option value="EUR">Euro (EUR)</option>
-              <option value="USD">US Dollar (USD)</option>
-              <option value="CHF">Schweizer Franken (CHF)</option>
-              <option value="GBP">Britisches Pfund (GBP)</option>
-            </select>
-          </div>
+          
 
           <p
             v-if="!isAdmin"
@@ -216,14 +204,6 @@
       <!-- Save -->
       <div class="flex justify-end">
         <div class="space-y-2 text-right">
-          <p v-if="saveMessage" class="text-sm text-green-600">
-            {{ saveMessage }}
-          </p>
-
-          <p v-if="errorMessage" class="text-sm text-red-600">
-            {{ errorMessage }}
-          </p>
-
           <button
             type="button"
             class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
@@ -251,13 +231,21 @@
         <button
           type="button"
           class="mt-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
-          @click="leaveApartment"
+          @click="showLeaveDialog = true"
         >
           WG verlassen
         </button>
       </div>
     </div>
   </div>
+  <AppConfirmDialog
+    v-model="showLeaveDialog"
+    title="WG verlassen?"
+    message="Möchtest du diese WG wirklich verlassen? Wenn du Admin bist, wird automatisch ein anderes Mitglied Admin."
+    confirm-text="WG verlassen"
+    cancel-text="Abbrechen"
+    @confirm="leaveApartment"
+  />
 </template>
 
 <script setup>
@@ -265,10 +253,15 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { User, Lock, Home, Bell, Save } from 'lucide-vue-next'
 import AppNavbar from '@/components/AppNavbar.vue'
+import AppConfirmDialog from '@/components/AppConfirmDialog.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useToastStore } from '@/stores/toast'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const toast = useToastStore()
+
+const showLeaveDialog = ref(false)
 
 const isAdmin = computed(() => {
   return authStore.currentUser?.role === 'admin'
@@ -296,9 +289,6 @@ const notifs = reactive({
   tasks: true,
   expenses: true,
 })
-
-const saveMessage = ref('')
-const errorMessage = ref('')
 
 const notifItems = [
   {
@@ -361,31 +351,27 @@ onMounted(() => {
 })
 
 async function leaveApartment() {
-  const confirmed = confirm('Möchtest du diese WG wirklich verlassen?')
-
-  if (!confirmed) {
-    return
-  }
-
   try {
     const response = await authStore.leaveApartment()
 
     localStorage.removeItem('settings')
     loadApartmentData()
 
-    saveMessage.value = response.message || 'Du hast die WG verlassen.'
+    toast.success(
+      'WG verlassen',
+      response.message || 'Du hast die WG erfolgreich verlassen.'
+    )
 
     router.push('/wg-auswahl')
   } catch (error) {
-    errorMessage.value =
-      error.response?.data?.message || 'WG konnte nicht verlassen werden.'
+    toast.error(
+      'WG konnte nicht verlassen werden',
+      error.response?.data?.message || 'Bitte versuche es erneut.'
+    )
   }
 }
 
 async function saveSettings() {
-  errorMessage.value = ''
-  saveMessage.value = ''
-
   profile.avatar = profile.name.charAt(0).toUpperCase()
 
   try {
@@ -421,14 +407,15 @@ async function saveSettings() {
       })
     )
 
-    saveMessage.value = 'Änderungen wurden gespeichert.'
-
-    setTimeout(() => {
-      saveMessage.value = ''
-    }, 2000)
+    toast.success(
+      'Einstellungen gespeichert',
+      'Deine Änderungen wurden erfolgreich gespeichert.'
+    )
   } catch (error) {
-    errorMessage.value =
+    toast.error(
+      'Speichern fehlgeschlagen',
       error.response?.data?.message || 'Einstellungen konnten nicht gespeichert werden.'
+    )
   }
 }
 </script>

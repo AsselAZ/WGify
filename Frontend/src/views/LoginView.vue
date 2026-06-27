@@ -24,7 +24,7 @@
         <form class="space-y-4" @submit.prevent="handleSubmit">
           <div class="space-y-2">
             <label class="text-sm font-medium">E-Mail</label>
-            <input v-model="email" type="email" placeholder="deine@email.de" required
+            <input v-model="email" type="email" placeholder="deine@email.de" 
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring" />
           </div>
           <div class="space-y-2">
@@ -32,12 +32,9 @@
               <label class="text-sm font-medium">Passwort</label>
               <a href="#" class="text-sm text-purple hover:underline">Passwort vergessen?</a>
             </div>
-            <input v-model="password" type="password" placeholder="Dein Passwort" required
+            <input v-model="password" type="password" placeholder="Dein Passwort" 
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring" />
           </div>
-	  <p v-if="errorMessage" class="text-sm text-red-500">
-  		{{ errorMessage }}
-	  </p>
           <button type="submit" :disabled="isLoading"
             class="w-full px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-60">
             {{ isLoading ? 'Wird angemeldet...' : 'Anmelden' }}
@@ -62,21 +59,33 @@ import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import WGLogo from '@/components/WGifyLogo.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const toast = useToastStore()
 
 const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
-const errorMessage = ref('')
 
 async function handleSubmit() {
+  if (!email.value.trim()) {
+    toast.error('E-Mail fehlt', 'Bitte gib deine E-Mail-Adresse ein.')
+    return
+  }
+
+  if (!password.value) {
+    toast.error('Passwort fehlt', 'Bitte gib dein Passwort ein.')
+    return
+  }
+
   isLoading.value = true
-  errorMessage.value = ''
 
   try {
     const user = await authStore.login(email.value, password.value)
+
+    toast.success('Login erfolgreich', 'Willkommen zurück.')
 
     if (user.apartment_id) {
       router.push('/app/dashboard')
@@ -85,9 +94,9 @@ async function handleSubmit() {
     }
   } catch (error) {
     if (error.response?.status === 422) {
-      errorMessage.value = 'E-Mail oder Passwort ist falsch.'
+      toast.error('Login fehlgeschlagen', 'E-Mail oder Passwort ist falsch.')
     } else {
-      errorMessage.value = 'Server nicht erreichbar.'
+      toast.error('Server nicht erreichbar', 'Bitte prüfe, ob das Backend läuft.')
     }
   } finally {
     isLoading.value = false

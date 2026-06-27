@@ -41,9 +41,9 @@
         <ExpenseTable
           :expenses="filteredExpenses"
           :members="membersStore.members"
-          @add-expense="store.addExpense"
-          @update-expense="store.updateExpense"
-          @delete-expense="store.deleteExpense"
+          @add-expense="createExpense"
+          @update-expense="updateExpense"
+          @delete-expense="deleteExpense"
         />
       </div>
     </div>
@@ -59,10 +59,11 @@ import DashboardCard from '@/components/DashboardCard.vue'
 import ExpenseTable from '@/components/ExpenseTable.vue'
 import { useExpensesStore } from '@/stores/expenses'
 import { useMembersStore } from '@/stores/members'
+import { useToastStore } from '@/stores/toast'
 
 const store = useExpensesStore()
 const membersStore = useMembersStore()
-
+const toast = useToastStore()
 const searchQuery = ref('')
 
 onMounted(() => {
@@ -103,4 +104,66 @@ const avgPerPerson = computed(() =>
 const categoryCount = computed(() =>
   new Set(filteredExpenses.value.map(expense => expense.category)).size
 )
+
+async function createExpense(expense) {
+  try {
+    await store.addExpense(expense)
+    await store.loadExpenses()
+
+    toast.success(
+      'Ausgabe gespeichert',
+      `Die Ausgabe "${expense.title}" wurde erfolgreich gespeichert.`
+    )
+  } catch (error) {
+    toast.error(
+      'Speichern fehlgeschlagen',
+      error.response?.data?.message ||
+        error.response?.data?.errors?.title?.[0] ||
+        error.response?.data?.errors?.amount?.[0] ||
+        error.response?.data?.errors?.category?.[0] ||
+        error.response?.data?.errors?.paidBy?.[0] ||
+        error.response?.data?.errors?.date?.[0] ||
+        `Die Ausgabe "${expense.title}" konnte nicht gespeichert werden.`
+    )
+  }
+}
+
+async function updateExpense(id, expense) {
+  try {
+    await store.updateExpense(id, expense)
+    await store.loadExpenses()
+
+    toast.success(
+      'Ausgabe gespeichert',
+      `Die Ausgabe "${expense.title}" wurde erfolgreich gespeichert.`
+    )
+  } catch (error) {
+    toast.error(
+      'Speichern fehlgeschlagen',
+      error.response?.data?.message ||
+        `Die Ausgabe "${expense.title}" konnte nicht gespeichert werden.`
+    )
+  }
+}
+
+async function deleteExpense(id) {
+  const expense = store.expenses.find((item) => item.id === id)
+
+  try {
+    await store.deleteExpense(id)
+    await store.loadExpenses()
+
+    toast.success(
+      'Ausgabe gelöscht',
+      `Die Ausgabe "${expense?.title || 'Diese Ausgabe'}" wurde erfolgreich gelöscht.`
+    )
+  } catch (error) {
+    toast.error(
+      'Löschen fehlgeschlagen',
+      error.response?.data?.message ||
+        `Die Ausgabe "${expense?.title || 'Diese Ausgabe'}" konnte nicht gelöscht werden.`
+    )
+  }
+}
+
 </script>

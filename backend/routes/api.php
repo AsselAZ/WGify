@@ -371,11 +371,23 @@ Route::post('/register', function (Request $request) use ($userPayload) {
 
     $validated = $request->validate([
         'name' => 'required|string|max:255',
-        'email' => 'required|email|max:255|unique:users,email',
+        'email' => 'required|email|unique:users,email',
         'password' => 'required|string|min:8|confirmed',
         'mode' => 'required|in:create,join',
         'apartmentName' => 'required_if:mode,create|nullable|string|max:255',
         'inviteCode' => 'required_if:mode,join|nullable|string|max:20',
+    ], [
+        'name.required' => 'Bitte gib deinen Namen ein.',
+        'email.required' => 'Bitte gib deine E-Mail-Adresse ein.',
+        'email.email' => 'Bitte gib eine gültige E-Mail-Adresse ein.',
+        'email.unique' => 'Diese E-Mail-Adresse ist bereits registriert.',
+        'password.required' => 'Bitte gib ein Passwort ein.',
+        'password.min' => 'Das Passwort muss mindestens 8 Zeichen lang sein.',
+        'password.confirmed' => 'Die Passwörter stimmen nicht überein.',
+        'mode.required' => 'Bitte wähle aus, ob du eine WG erstellen oder beitreten möchtest.',
+        'mode.in' => 'Bitte wähle eine gültige Option aus.',
+        'apartmentName.required_if' => 'Bitte gib einen WG-Namen ein.',
+        'inviteCode.required_if' => 'Bitte gib einen Einladungscode ein.',
     ]);
 
     if ($validated['mode'] === 'create') {

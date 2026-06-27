@@ -38,7 +38,7 @@
               <input
                 type="checkbox"
                 :checked="task.status === 'erledigt'"
-                @change="emit('toggleStatus', task.id)"
+                @change="toggleStatus(task)"
                 class="w-4 h-4 rounded border-border accent-primary cursor-pointer"
               />
             </td>
@@ -61,18 +61,20 @@
             </td>
 
             <td class="px-4 py-3">
-              <span
+              <button
+                type="button"
                 :class="[
-                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
+                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
                   task.status === 'erledigt'
-                    ? 'bg-accent/50 text-accent-foreground'
-                    : 'bg-warning/20 text-warning-foreground'
+                    ? 'bg-accent/50 text-accent-foreground hover:bg-accent/70'
+                    : 'bg-warning/20 text-warning-foreground hover:bg-warning/30'
                 ]"
+                @click="toggleStatus(task)"
               >
                 <CheckCircle2 v-if="task.status === 'erledigt'" class="h-3 w-3" />
                 <Circle v-else class="h-3 w-3" />
                 {{ task.status === 'erledigt' ? 'Erledigt' : 'Offen' }}
-              </span>
+              </button>
             </td>
 
             <td class="px-4 py-3">
@@ -220,10 +222,10 @@ defineProps({
 })
 
 const emit = defineEmits([
-  'addTask',
+  'createTask',
   'updateTask',
   'deleteTask',
-  'toggleStatus',
+  'toggleTaskStatus',
 ])
 
 const showDialog = ref(false)
@@ -284,7 +286,7 @@ function handleSubmit() {
   if (editingTaskId.value) {
     emit('updateTask', editingTaskId.value, payload)
   } else {
-    emit('addTask', payload)
+    emit('createTask', payload)
   }
 
   closeDialog()
@@ -295,13 +297,15 @@ function deleteTask(task) {
   showDeleteDialog.value = true
 }
 
-function confirmDeleteTask() {
-  if (!selectedTask.value) {
-    return
-  }
+function toggleStatus(task) {
+  const nextStatus = task.status === 'erledigt' ? 'offen' : 'erledigt'
 
-  emit('deleteTask', selectedTask.value.id)
-  selectedTask.value = null
+  emit('toggleTaskStatus', task.id, {
+    title: task.title,
+    assignedTo: task.assignedTo,
+    dueDate: task.dueDate,
+    status: nextStatus,
+  })
 }
 
 function formatDate(date) {
