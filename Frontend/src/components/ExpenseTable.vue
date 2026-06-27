@@ -99,9 +99,7 @@
         <h3 class="text-lg font-semibold mb-4">
           {{ editingExpenseId ? 'Ausgabe bearbeiten' : 'Neue Ausgabe hinzufügen' }}
         </h3>
-        <p v-if="formError" class="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
-  {{ formError }}
-</p>
+        
 
         <form class="space-y-4" @submit.prevent="handleSubmit" novalidate>
           <div class="space-y-2">
@@ -168,7 +166,9 @@
               
             />
           </div>
-
+ <p v-if="formError" class="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
+  {{ formError }}
+</p>
           <div class="flex gap-3 pt-2">
             <button
               type="button"

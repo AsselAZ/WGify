@@ -119,14 +119,15 @@
           {{ editingTaskId ? 'Aufgabe bearbeiten' : 'Neue Aufgabe hinzufügen' }}
         </h3>
 
-        <form class="space-y-4" @submit.prevent="handleSubmit">
+        <form class="space-y-4" @submit.prevent="handleSubmit" novalidate>
+          
           <div class="space-y-2">
             <label class="text-sm font-medium">Aufgabe</label>
             <input
               v-model="form.title"
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
               placeholder="z.B. Küche putzen"
-              required
+              
             />
           </div>
 
@@ -135,7 +136,7 @@
             <select
               v-model="form.assignedTo"
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
-              required
+              
             >
               <option value="">Person wählen</option>
               <option
@@ -154,7 +155,7 @@
               v-model="form.dueDate"
               type="date"
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
-              required
+              
             />
           </div>
 
@@ -168,7 +169,12 @@
               <option value="erledigt">Erledigt</option>
             </select>
           </div>
-
+          <p
+  v-if="formError"
+  class="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600"
+>
+  {{ formError }}
+</p>
           <div class="flex gap-3 pt-2">
             <button
               type="button"
@@ -230,6 +236,7 @@ const emit = defineEmits([
 
 const showDialog = ref(false)
 const editingTaskId = ref(null)
+const formError = ref('')
 const showDeleteDialog = ref(false)
 const selectedTask = ref(null)
 
@@ -272,7 +279,20 @@ function closeDialog() {
 }
 
 function handleSubmit() {
-  if (!form.value.title || !form.value.assignedTo || !form.value.dueDate) {
+  formError.value = ''
+
+  if (!form.value.title.trim()) {
+    formError.value = 'Bitte gib eine Aufgabe ein.'
+    return
+  }
+
+  if (!form.value.assignedTo) {
+    formError.value = 'Bitte wähle eine zuständige Person aus.'
+    return
+  }
+
+  if (!form.value.dueDate) {
+    formError.value = 'Bitte wähle ein Fälligkeitsdatum aus.'
     return
   }
 
