@@ -1,5 +1,6 @@
 <template>
   <div class="space-y-4">
+    <!-- Header -->
     <div class="flex items-center justify-between">
       <h3 class="text-lg font-semibold">WG-Mitglieder</h3>
 
@@ -13,6 +14,7 @@
       </button>
     </div>
 
+    <!-- Member List -->
     <div class="space-y-3">
       <div
         v-for="member in members"
@@ -26,9 +28,7 @@
         </div>
 
         <div class="flex-1 min-w-0">
-          <p class="font-medium truncate">
-            {{ member.name }}
-          </p>
+          <p class="font-medium truncate">{{ member.name }}</p>
           <p class="text-sm text-muted-foreground truncate">
             {{ member.email }}
           </p>
@@ -44,6 +44,7 @@
           <User v-else class="h-3 w-3" />
           {{ member.role === 'admin' ? 'Admin' : 'Mitglied' }}
         </div>
+
         <button
           v-if="isAdmin && String(member.id) !== currentUserId"
           type="button"
@@ -63,17 +64,20 @@
       </p>
     </div>
 
+    <!-- Invite Modal -->
     <div
       v-if="showInviteDialog"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       @click.self="showInviteDialog = false"
     >
       <div class="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg">
+
+        <!-- Header -->
         <div class="flex items-start justify-between gap-4">
           <div>
             <h3 class="text-lg font-semibold">Mitglied einladen</h3>
             <p class="mt-1 text-sm text-muted-foreground">
-              Neue Mitglieder wählen bei der Registrierung „WG beitreten“ und geben diesen Code ein.
+              Einladung per Code oder E-Mail senden
             </p>
           </div>
 
@@ -86,6 +90,7 @@
           </button>
         </div>
 
+        <!-- Invite Code -->
         <div class="mt-5 space-y-2">
           <label class="text-sm font-medium">Einladungscode</label>
 
@@ -110,6 +115,36 @@
           </p>
         </div>
 
+        <!-- Email Invite -->
+        <div class="mt-6 space-y-2">
+          <label class="text-sm font-medium">Per E-Mail einladen</label>
+
+          <input
+            v-model="inviteEmail"
+            type="email"
+            placeholder="email@beispiel.de"
+            class="w-full rounded-md border border-border bg-input px-3 py-2 text-sm"
+          />
+
+          <button
+            type="button"
+            class="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            :disabled="sending"
+            @click="sendInvite"
+          >
+            {{ sending ? 'Sende Einladung...' : 'Einladung senden' }}
+          </button>
+
+          <p v-if="successMessage" class="text-sm text-green-600">
+            {{ successMessage }}
+          </p>
+
+          <p v-if="errorMessage" class="text-sm text-red-600">
+            {{ errorMessage }}
+          </p>
+        </div>
+
+        <!-- Close -->
         <div class="mt-6 flex justify-end">
           <button
             type="button"
@@ -144,6 +179,7 @@ import {
 } from 'lucide-vue-next'
 
 import { useAuthStore } from '@/stores/auth'
+import { api } from '@/lib/api'
 
 defineProps({
   members: {
@@ -152,51 +188,43 @@ defineProps({
   },
 })
 
-const showInviteDialog = ref(false)
-const copied = ref(false)
-const showRemoveDialog = ref(false)
-const selectedMember = ref(null)
-
 const emit = defineEmits(['removeMember'])
 
 const authStore = useAuthStore()
 
-const isAdmin = computed(() => {
-  return authStore.currentUser?.role === 'admin'
-})
+const isAdmin = computed(() => authStore.currentUser?.role === 'admin')
 
-const currentUserId = computed(() => {
-  return String(authStore.currentUser?.id || '')
-})
+const currentUserId = computed(() =>
+  String(authStore.currentUser?.id || '')
+)
 
-function removeMember(member) {
-  selectedMember.value = member
-  showRemoveDialog.value = true
-}
+// UI state
+const showInviteDialog = ref(false)
+const copied = ref(false)
 
-function confirmRemoveMember() {
-  if (!selectedMember.value) {
-    return
-  }
+// Email invite state
+const inviteEmail = ref('')
+const sending = ref(false)
+const successMessage = ref('')
+const errorMessage = ref('')
 
-  emit('removeMember', selectedMember.value.id)
-  selectedMember.value = null
-}
-
+// Invite code
 const currentUser = computed(() => {
   const savedUser = localStorage.getItem('currentUser')
-
-  if (!savedUser) {
-    return null
-  }
-
-  return JSON.parse(savedUser)
+  return savedUser ? JSON.parse(savedUser) : null
 })
 
-const inviteCode = computed(() => {
-  return currentUser.value?.apartment?.inviteCode || ''
-})
+const inviteCode = computed(() =>
+  currentUser.value?.apartment?.inviteCode || ''
+)
 
+// Remove member
+function removeMember(member) {
+  if (!confirm(`${member.name} wirklich aus der WG entfernen?`)) return
+  emit('removeMember', member.id)
+}
+
+// Copy code
 async function copyInviteCode() {
   await navigator.clipboard.writeText(inviteCode.value)
   copied.value = true
@@ -204,5 +232,26 @@ async function copyInviteCode() {
   setTimeout(() => {
     copied.value = false
   }, 2000)
+}
+
+// Send email invite
+async function sendInvite() {
+  sending.value = true
+  successMessage.value = ''
+  errorMessage.value = ''
+
+  try {
+    await api.post('/apartments/invite', {
+      email: inviteEmail.value,
+    })
+
+    successMessage.value = 'Einladung wurde gesendet!'
+    inviteEmail.value = ''
+  } catch (err) {
+    console.log(err.response?.data || err)
+    errorMessage.value = err.response?.data?.message || 'Fehler beim Senden der Einladung'
+} finally {
+    sending.value = false
+  }
 }
 </script>
