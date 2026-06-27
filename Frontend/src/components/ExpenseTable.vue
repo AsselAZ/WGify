@@ -99,15 +99,18 @@
         <h3 class="text-lg font-semibold mb-4">
           {{ editingExpenseId ? 'Ausgabe bearbeiten' : 'Neue Ausgabe hinzufügen' }}
         </h3>
+        <p v-if="formError" class="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
+  {{ formError }}
+</p>
 
-        <form class="space-y-4" @submit.prevent="handleSubmit">
+        <form class="space-y-4" @submit.prevent="handleSubmit" novalidate>
           <div class="space-y-2">
             <label class="text-sm font-medium">Titel</label>
             <input
               v-model="form.title"
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
               placeholder="z.B. Internet"
-              required
+              
             />
           </div>
 
@@ -120,7 +123,7 @@
               min="0"
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
               placeholder="0.00"
-              required
+              
             />
           </div>
 
@@ -129,7 +132,7 @@
             <select
               v-model="form.category"
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
-              required
+              
             >
               <option value="">Kategorie wählen</option>
               <option v-for="cat in categories" :key="cat" :value="cat">
@@ -143,7 +146,7 @@
             <select
               v-model="form.paidBy"
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
-              required
+              
             >
               <option value="">Person wählen</option>
               <option
@@ -162,7 +165,7 @@
               v-model="form.date"
               type="date"
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
-              required
+              
             />
           </div>
 
@@ -238,6 +241,7 @@ const showDialog = ref(false)
 const editingExpenseId = ref(null)
 const showDeleteDialog = ref(false)
 const selectedExpense = ref(null)
+const formError = ref('')
 
 const form = ref({
   title: '',
@@ -281,6 +285,33 @@ function closeDialog() {
 }
 
 function handleSubmit() {
+  formError.value = ''
+
+  if (!form.value.title.trim()) {
+    formError.value = 'Bitte gib einen Titel ein.'
+    return
+  }
+
+  if (!form.value.amount || Number(form.value.amount) <= 0) {
+    formError.value = 'Bitte gib einen gültigen Betrag ein.'
+    return
+  }
+
+  if (!form.value.category) {
+    formError.value = 'Bitte wähle eine Kategorie aus.'
+    return
+  }
+
+  if (!form.value.paidBy) {
+    formError.value = 'Bitte wähle aus, wer bezahlt hat.'
+    return
+  }
+
+  if (!form.value.date) {
+    formError.value = 'Bitte wähle ein Datum aus.'
+    return
+  }
+
   const payload = {
     title: form.value.title,
     amount: parseFloat(form.value.amount),
