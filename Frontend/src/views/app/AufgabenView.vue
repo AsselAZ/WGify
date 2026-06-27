@@ -64,6 +64,8 @@ import DashboardCard from '@/components/DashboardCard.vue'
 import TaskTable from '@/components/TaskTable.vue'
 import { useTasksStore } from '@/stores/tasks'
 import { useMembersStore } from '@/stores/members'
+import { useNotificationsStore } from '@/stores/notifications'
+import { useAuthStore } from '@/stores/auth'
 
 import {
   ListTodo,
@@ -76,10 +78,12 @@ import {
 const store = useTasksStore()
 const membersStore = useMembersStore()
 const toast = useToastStore()
-
+const notifications = useNotificationsStore()
 const searchQuery = ref('')
+const authStore = useAuthStore()
 
 onMounted(() => {
+  notifications.loadNotifications()
   store.loadTasks()
   membersStore.loadMembers()
 })
@@ -129,7 +133,22 @@ const completionRate = computed(() => {
 
 async function createTask(task) {
   try {
-    await store.addTask(task) 
+    await store.addTask(task)
+    await store.loadTasks()
+
+    const assignedMember = membersStore.members.find((member) => {
+      return member.name?.trim().toLowerCase() === task.assignedTo?.trim().toLowerCase()
+    })
+
+    if (assignedMember?.email) {
+      notifications.addNotificationForUser(
+        assignedMember.email,
+        'task-assigned',
+        'Neue Aufgabe zugewiesen',
+        `Dir wurde die Aufgabe "${task.title}" zugewiesen.`
+      )
+    }
+
     toast.success(
       'Aufgabe erstellt',
       `Die Aufgabe "${task.title}" wurde erfolgreich gespeichert.`
@@ -146,7 +165,7 @@ async function createTask(task) {
 async function updateTask(id, task) {
   try {
     await store.updateTask(id, task)
-
+    
     toast.success(
       'Aufgabe gespeichert',
       `Die Aufgabe "${task.title}" wurde erfolgreich gespeichert.`
@@ -165,6 +184,7 @@ async function deleteTask(id) {
 
   try {
     await store.deleteTask(id)
+    await store.loadTasks()
 
     toast.success(
       'Aufgabe gelöscht',

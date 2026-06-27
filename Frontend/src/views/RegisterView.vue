@@ -174,7 +174,11 @@ import { CheckCircle } from 'lucide-vue-next'
 import WGLogo from '@/components/WGifyLogo.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
+import { useMembersStore } from '@/stores/members'
+import { useNotificationsStore } from '@/stores/notifications'
 
+const membersStore = useMembersStore()
+const notifications = useNotificationsStore()
 const router = useRouter()
 const authStore = useAuthStore()
 
@@ -231,6 +235,23 @@ async function handleSubmit() {
       apartmentName: form.apartmentName,
       inviteCode: form.inviteCode,
     })
+    if (form.mode === 'join') {
+      await membersStore.loadMembers()
+
+      const joinedUserName = authStore.currentUser?.name || 'Ein neues Mitglied'
+      const joinedUserEmail = authStore.currentUser?.email
+
+      membersStore.members
+        .filter((member) => member.email && member.email !== joinedUserEmail)
+        .forEach((member) => {
+          notifications.addNotificationForUser(
+            member.email,
+            'member-joined',
+            `${joinedUserName} ist der WG beigetreten.`
+            
+          )
+        })
+    }
     toast.success('Registrierung erfolgreich', 'Dein Konto wurde erstellt.')
 
     router.push('/app/dashboard') //Erfolgereiche Registrierung

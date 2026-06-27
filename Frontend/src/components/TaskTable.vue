@@ -201,7 +201,7 @@
     :message="`Möchtest du die Aufgabe '${selectedTask?.title || ''}' wirklich löschen?`"
     confirm-text="Löschen"
     cancel-text="Abbrechen"
-    @confirm="confirmDeleteTask"
+    @confirm="deleteTask"
   />
 </template>
 
@@ -312,9 +312,19 @@ function handleSubmit() {
   closeDialog()
 }
 
-function deleteTask(task) {
-  selectedTask.value = task
-  showDeleteDialog.value = true
+function deleteTask(task = null) {
+  if (task) {
+    selectedTask.value = task
+    showDeleteDialog.value = true
+    return
+  }
+
+  if (!selectedTask.value) {
+    return
+  }
+
+  emit('deleteTask', selectedTask.value.id)
+  selectedTask.value = null
 }
 
 function toggleStatus(task) {

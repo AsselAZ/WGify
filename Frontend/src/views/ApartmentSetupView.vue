@@ -79,10 +79,13 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
+import { useMembersStore } from '@/stores/members'
+import { useNotificationsStore } from '@/stores/notifications'
 
 const router = useRouter()
 const authStore = useAuthStore()
-
+const membersStore = useMembersStore()
+const notifications = useNotificationsStore()
 const mode = ref('join')
 const apartmentName = ref('')
 const inviteCode = ref('')
@@ -107,10 +110,37 @@ async function submit() {
   try {
     if (mode.value === 'create') {
       await authStore.createApartment(apartmentName.value)
-      toast.success('WG erstellt', 'Du wurdest erfolgreich als Admin hinzugefügt.')
+
+      toast.success(
+        'WG erstellt',
+        'Du wurdest erfolgreich als Admin hinzugefügt.'
+      )
     } else {
       await authStore.joinApartment(inviteCode.value)
-      toast.success('WG beigetreten', 'Du bist der WG erfolgreich beigetreten.')
+
+      await membersStore.loadMembers()
+
+      console.log('Mitglieder nach WG-Beitritt:', membersStore.members)
+      console.log('Aktueller User nach WG-Beitritt:', authStore.currentUser)
+
+      const joinedUserName = authStore.currentUser?.name || 'Ein neues Mitglied'
+      const joinedUserEmail = authStore.currentUser?.email
+
+      membersStore.members
+        .filter((member) => member.email && member.email !== joinedUserEmail)
+        .forEach((member) => {
+          notifications.addNotificationForUser(
+            member.email,
+            'member-joined',
+            `${joinedUserName} ist der WG beigetreten.`
+            
+          )
+        })
+
+      toast.success(
+        'WG beigetreten',
+        'Du bist der WG erfolgreich beigetreten.'
+      )
     }
 
     router.push(appHome)

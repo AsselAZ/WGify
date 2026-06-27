@@ -256,10 +256,14 @@ import AppNavbar from '@/components/AppNavbar.vue'
 import AppConfirmDialog from '@/components/AppConfirmDialog.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
+import { useMembersStore } from '@/stores/members'
+import { useNotificationsStore } from '@/stores/notifications'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const toast = useToastStore()
+const membersStore = useMembersStore()
+const notifications = useNotificationsStore()
 
 const showLeaveDialog = ref(false)
 
@@ -352,6 +356,22 @@ onMounted(() => {
 
 async function leaveApartment() {
   try {
+    await membersStore.loadMembers()
+
+    const leavingUserName = authStore.currentUser?.name || 'Ein Mitglied'
+    const leavingUserEmail = authStore.currentUser?.email
+
+    membersStore.members
+      .filter((member) => member.email && member.email !== leavingUserEmail)
+      .forEach((member) => {
+        notifications.addNotificationForUser(
+          member.email,
+          'member-left',
+          `${leavingUserName} hat die WG verlassen.`
+          
+        )
+      })
+
     const response = await authStore.leaveApartment()
 
     localStorage.removeItem('settings')

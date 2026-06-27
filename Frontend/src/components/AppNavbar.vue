@@ -17,15 +17,14 @@
         />
       </div>
 
-      <button class="rounded-md p-2 hover:bg-muted" type="button">
-        <Bell class="h-5 w-5" />
-      </button>
+      <AppNotifications />
     </div>
   </header>
 </template>
 
 <script setup>
-import { Search, Bell } from 'lucide-vue-next'
+import { Search } from 'lucide-vue-next'
+import AppNotifications from '@/components/AppNotifications.vue'
 
 defineProps({
   title: {
