@@ -16,7 +16,7 @@ class ApartmentInviteMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Deine WG Einladung')
+        return $this->subject('Einladung zur WG ' . $this->apartmentName)
             ->view('apartment-invite');
     }
 }
