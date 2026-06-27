@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ApartmentInviteMail;
 
 $getCurrentUser = function (Request $request) {
     $userId = $request->header('X-User-Id');
@@ -360,6 +362,33 @@ Route::post('/apartments/join', function (Request $request) use ($getCurrentUser
         'user' => $userPayload($currentUser->fresh()),
     ]);
 });
+
+// Einladung per E-Mail senden ---------------------------------------------------
+Route::post('/apartments/invite', function (Request $request) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
+
+    if (!$currentUser->apartment_id) {
+        abort(403, 'Du bist in keiner WG.');
+    }
+
+    if ($currentUser->role !== 'admin') {
+        abort(403, 'Nur Admins dürfen Einladungen versenden.');
+    }
+
+    $validated = $request->validate([
+        'email' => 'required|email',
+    ]);
+
+    $apartment = $currentUser->apartment;
+
+    Mail::to($validated['email'])
+        ->send(new ApartmentInviteMail($apartment->invite_code));
+
+    return response()->json([
+        'message' => 'Einladung wurde gesendet.',
+    ]);
+});
+
 
 // Auth ----------------------------------------------------------------
 
