@@ -129,8 +129,7 @@ const completionRate = computed(() => {
 
 async function createTask(task) {
   try {
-    await store.createTask(task)
-
+    await store.addTask(task) 
     toast.success(
       'Aufgabe erstellt',
       `Die Aufgabe "${task.title}" wurde erfolgreich gespeichert.`
