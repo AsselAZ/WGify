@@ -179,6 +179,7 @@ import {
 } from 'lucide-vue-next'
 
 import { useAuthStore } from '@/stores/auth'
+import { useMembersStore } from '@/stores/members'
 import { api } from '@/lib/api'
 
 defineProps({
@@ -191,6 +192,7 @@ defineProps({
 const emit = defineEmits(['removeMember'])
 
 const authStore = useAuthStore()
+const membersStore = useMembersStore()
 
 const isAdmin = computed(() => authStore.currentUser?.role === 'admin')
 
@@ -243,11 +245,13 @@ async function sendInvite() {
 
   try {
     await api.post('/apartments/invite', {
-      email: inviteEmail.value,
-    })
+  email: inviteEmail.value,
+})
 
-    successMessage.value = 'Einladung wurde gesendet!'
-    inviteEmail.value = ''
+await membersStore.loadPendingInvitationsCount()
+
+successMessage.value = 'Einladung wurde gesendet!'
+inviteEmail.value = ''
   } catch (err) {
     console.log(err.response?.data || err)
     errorMessage.value = err.response?.data?.message || 'Fehler beim Senden der Einladung'

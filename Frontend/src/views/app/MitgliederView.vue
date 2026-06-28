@@ -31,7 +31,7 @@
 
         <DashboardCard
           title="Einladungen"
-          :value="0"
+          :value="membersStore.pendingInvitationsCount"
           subtitle="Ausstehend"
           :icon="Mail"
         />
@@ -74,6 +74,7 @@ const membersStore = useMembersStore()
 
 onMounted(() => {
   membersStore.loadMembers()
+  membersStore.loadPendingInvitationsCount()
 })
 
 const members = computed(() => membersStore.members)

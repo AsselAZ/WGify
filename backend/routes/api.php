@@ -16,6 +16,7 @@ use App\Mail\TaskAssignedToMemberMail;
 use App\Mail\MemberLeftNotificationMail;
 use App\Mail\ApartmentLeftMail;
 use App\Mail\MemberJoinsMail;
+use App\Models\Invitation;
 
 $getCurrentUser = function (Request $request) {
     $userId = $request->header('X-User-Id');
@@ -406,6 +407,12 @@ Route::post('/apartments/join', function (Request $request) use ($getCurrentUser
         'apartment_id' => $apartment->id,
         'role' => 'mitglied',
     ]);
+    Invitation::where('apartment_id', $apartment->id)
+    ->where('email', $currentUser->email)
+    ->where('status', 'pending')
+    ->update([
+        'status' => 'accepted',
+    ]);
 
     return response()->json([
         'message' => 'Du bist der WG beigetreten.',
@@ -431,6 +438,13 @@ Route::post('/apartments/invite', function (Request $request) use ($getCurrentUs
 
     $apartment = $currentUser->apartment;
 
+    Invitation::create([
+        'apartment_id' => $currentUser->apartment_id,
+        'email' => $validated['email'],
+        'status' => 'pending',
+        'expires_at' => now()->addWeek(),
+    ]);
+
     Mail::to($validated['email'])->send(
         new ApartmentInviteMail(
             $apartment->invite_code,
@@ -442,7 +456,24 @@ Route::post('/apartments/invite', function (Request $request) use ($getCurrentUs
         'message' => 'Einladung wurde gesendet.',
     ]);
 });
+Route::get('/invitations/pending-count', function (Request $request) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
 
+    if (!$currentUser->apartment_id) {
+        return response()->json([
+            'count' => 0,
+        ]);
+    }
+
+    $count = Invitation::where('apartment_id', $currentUser->apartment_id)
+        ->where('status', 'pending')
+        ->where('expires_at', '>', now())
+        ->count();
+
+    return response()->json([
+        'count' => $count,
+    ]);
+});
 
 // Auth ----------------------------------------------------------------
 
@@ -503,6 +534,12 @@ Route::post('/register', function (Request $request) use ($userPayload) {
         'password' => Hash::make($validated['password']),
         'apartment_id' => $apartment->id,
         'role' => $role,
+    ]);
+    Invitation::where('apartment_id', $apartment->id)
+    ->where('email', $validated['email'])
+    ->where('status', 'pending')
+    ->update([
+        'status' => 'accepted',
     ]);
 
     // NUR wenn WG beigetreten wird
