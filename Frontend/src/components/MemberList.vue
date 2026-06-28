@@ -222,6 +222,7 @@ const inviteCode = computed(() =>
 function removeMember(member) {
   if (!confirm(`${member.name} wirklich aus der WG entfernen?`)) return
   emit('removeMember', member.id)
+
 }
 
 // Copy code
