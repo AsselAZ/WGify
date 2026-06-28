@@ -7,11 +7,12 @@ use App\Models\Apartment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Mail;
 use App\Mail\ApartmentInviteMail;
 use App\Mail\MemberRemovedMail;
+use App\Mail\TaskAssignedToMemberMail;
 
 $getCurrentUser = function (Request $request) {
     $userId = $request->header('X-User-Id');
@@ -170,6 +171,37 @@ Route::get('/tasks', function (Request $request) use ($getCurrentUser) {
         });
 });
 
+// Route::post('/tasks', function (Request $request) use ($getCurrentUser) {
+//     $currentUser = $getCurrentUser($request);
+
+//     if (!$currentUser->apartment_id) {
+//         abort(403, 'Du bist in keiner WG.');
+//     }
+
+//     $validated = $request->validate([
+//         'title' => 'required|string|max:255',
+//         'assignedTo' => 'required|string|max:255',
+//         'dueDate' => 'required|date',
+//         'status' => 'required|in:offen,erledigt',
+//     ]);
+
+//     $task = Task::create([
+//         'apartment_id' => $currentUser->apartment_id,
+//         'title' => $validated['title'],
+//         'assigned_to' => $validated['assignedTo'],
+//         'due_date' => $validated['dueDate'],
+//         'status' => $validated['status'],
+//     ]);
+
+//     return response()->json([
+//         'id' => (string) $task->id,
+//         'title' => $task->title,
+//         'assignedTo' => $task->assigned_to,
+//         'dueDate' => $task->due_date,
+//         'status' => $task->status,
+//     ], 201);
+// });
+
 Route::post('/tasks', function (Request $request) use ($getCurrentUser) {
     $currentUser = $getCurrentUser($request);
 
@@ -191,6 +223,20 @@ Route::post('/tasks', function (Request $request) use ($getCurrentUser) {
         'due_date' => $validated['dueDate'],
         'status' => $validated['status'],
     ]);
+
+    // // User holen
+    // $member = User::where('id', $validated['assignedTo'])
+    // ->where('apartment_id', $currentUser->apartment_id)
+    // ->firstOrFail();
+
+    // // Mail senden
+    // Mail::to($member->email)->send(
+    //     new TaskAssignedToMemberMail(
+    //         $member->name,
+    //         $task->title,
+    //         $task->due_date
+    //     )
+    // );
 
     return response()->json([
         'id' => (string) $task->id,
@@ -382,8 +428,12 @@ Route::post('/apartments/invite', function (Request $request) use ($getCurrentUs
 
     $apartment = $currentUser->apartment;
 
-    Mail::to($validated['email'])
-        ->send(new ApartmentInviteMail($apartment->invite_code, $apartment->name));
+    Mail::to($validated['email'])->send(
+        new ApartmentInviteMail(
+            $apartment->invite_code,
+            $apartment->name
+        )
+    );
 
     return response()->json([
         'message' => 'Einladung wurde gesendet.',
