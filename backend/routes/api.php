@@ -13,6 +13,9 @@ use Illuminate\Validation\ValidationException;
 use App\Mail\ApartmentInviteMail;
 use App\Mail\MemberRemovedMail;
 use App\Mail\TaskAssignedToMemberMail;
+use App\Mail\MemberLeftNotificationMail;
+use App\Mail\ApartmentLeftMail;
+use App\Mail\MemberJoinsMail;
 
 $getCurrentUser = function (Request $request) {
     $userId = $request->header('X-User-Id');
@@ -224,19 +227,19 @@ Route::post('/tasks', function (Request $request) use ($getCurrentUser) {
         'status' => $validated['status'],
     ]);
 
-    // // User holen
-    // $member = User::where('id', $validated['assignedTo'])
-    // ->where('apartment_id', $currentUser->apartment_id)
-    // ->firstOrFail();
+    // User holen
+    $member = User::where('name', $validated['assignedTo'])
+    ->where('apartment_id', $currentUser->apartment_id)
+    ->firstOrFail();
 
-    // // Mail senden
-    // Mail::to($member->email)->send(
-    //     new TaskAssignedToMemberMail(
-    //         $member->name,
-    //         $task->title,
-    //         $task->due_date
-    //     )
-    // );
+    // Mail senden
+    Mail::to($member->email)->send(
+        new TaskAssignedToMemberMail(
+            $member->name,
+            $task->title,
+            $task->due_date
+        )
+    );
 
     return response()->json([
         'id' => (string) $task->id,
@@ -502,6 +505,23 @@ Route::post('/register', function (Request $request) use ($userPayload) {
         'role' => $role,
     ]);
 
+    // NUR wenn WG beigetreten wird
+    if ($validated['mode'] === 'join') {
+        $otherMembers = User::where('apartment_id', $apartment->id)
+            ->where('name', '!=', $user->name)
+            ->get();
+
+        foreach ($otherMembers as $member) {
+            Mail::to($member->email)->send(
+                new MemberJoinsMail(
+                    $member->name,
+                    $user->name,
+                    $apartment->name
+                )
+            );
+        }
+    }
+
     return response()->json([
         'message' => 'Registrierung erfolgreich',
         'user' => $userPayload($user),
@@ -605,9 +625,19 @@ Route::post('/apartments/leave', function (Request $request) use ($getCurrentUse
     }
 
     $apartment = $user->apartment;
+
+    // WICHTIG: Mitglieder VOR Änderung holen
     $members = User::where('apartment_id', $apartment->id)->get();
 
+    // alle anderen Mitglieder (außer der User selbst)
+    $remainingMembers = $members->where('id', '!=', $user->id);
+
     if ($members->count() === 1) {
+
+        Mail::to($user->email)->send(
+            new ApartmentLeftMail($user->name, $apartment->name)
+        );
+
         $user->update([
             'apartment_id' => null,
             'role' => 'mitglied',
@@ -621,6 +651,7 @@ Route::post('/apartments/leave', function (Request $request) use ($getCurrentUse
         ]);
     }
 
+    // Admin-Wechsel falls nötig
     if ($user->role === 'admin') {
         $nextAdmin = User::where('apartment_id', $apartment->id)
             ->where('id', '!=', $user->id)
@@ -634,6 +665,26 @@ Route::post('/apartments/leave', function (Request $request) use ($getCurrentUse
         }
     }
 
+    // Mail an verbleibende Mitglieder
+    foreach ($remainingMembers as $member) {
+        Mail::to($member->email)->send(
+            new MemberLeftNotificationMail(
+                $member->name,
+                $user->name,
+                $apartment->name
+            )
+        );
+    }
+
+    // Mail an den User selbst (gesondert)
+    Mail::to($user->email)->send(
+        new ApartmentLeftMail(
+            $user->name,
+            $apartment->name
+        )
+    );
+
+    // User entfernen
     $user->update([
         'apartment_id' => null,
         'role' => 'mitglied',

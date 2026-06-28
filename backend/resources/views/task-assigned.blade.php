@@ -3,7 +3,7 @@
     Dir wurde folgende Aufgabe zugewiesen: <strong>{{ $taskTitle }}</strong>
 </p>
 <p>
-    Die Fälligkeitsdatum ist: <strong>{{ $taskDueDate }}</strong>
+    Das Fälligkeitsdatum ist: <strong>{{ $taskDueDate }}</strong>
 </p>
 <p>
     Viele Grüße<br>
