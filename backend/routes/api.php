@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ApartmentInviteMail;
+use App\Mail\MemberRemovedMail;
 
 $getCurrentUser = function (Request $request) {
     $userId = $request->header('X-User-Id');
@@ -524,6 +525,13 @@ Route::delete('/members/{member}', function (Request $request, User $member) use
     if ($member->apartment_id !== $currentUser->apartment_id) {
         abort(403, 'Dieses Mitglied gehört nicht zu deiner WG.');
     }
+
+    // E-Mail verschicken
+    Mail::to($member->email)->send(
+    new MemberRemovedMail(
+        $member->name,
+        $currentUser->apartment->name
+    ));
 
     $member->update([
         'apartment_id' => null,
