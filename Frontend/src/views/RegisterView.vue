@@ -256,7 +256,10 @@ async function handleSubmit() {
 
     router.push('/app/dashboard') //Erfolgereiche Registrierung
 
-  } catch (error) {
+    } catch (error) {
+    console.log('Register error:', error)
+    console.log('Register response:', error.response?.data)
+
     if (error.response?.status === 422) {
       const errors = error.response.data.errors
 
@@ -270,7 +273,12 @@ async function handleSubmit() {
           'Bitte prüfe deine Eingaben.'
       )
     } else {
-      toast.error('Server nicht erreichbar', 'Bitte prüfe, ob das Backend läuft.')
+      toast.error(
+        'Registrierung fehlgeschlagen',
+        error.response?.data?.message ||
+          error.message ||
+          'Ein unerwarteter Fehler ist aufgetreten.'
+      )
     }
   } finally {
     isLoading.value = false

@@ -102,7 +102,11 @@
           <div class="space-y-2">
             <label class="text-sm font-medium">Aktuelles Passwort</label>
             <input
+              v-model="passwordForm.currentPassword"
               type="password"
+              name="wgify-current-password"
+              autocomplete="new-password"
+              placeholder="Aktuelles Passwort eingeben"
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
@@ -111,7 +115,11 @@
             <div class="space-y-2">
               <label class="text-sm font-medium">Neues Passwort</label>
               <input
+                v-model="passwordForm.newPassword"
                 type="password"
+                name="wgify-new-password"
+                autocomplete="new-password"
+                placeholder="Neues Passwort eingeben"
                 class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -119,7 +127,11 @@
             <div class="space-y-2">
               <label class="text-sm font-medium">Passwort bestätigen</label>
               <input
+                v-model="passwordForm.confirmPassword"
                 type="password"
+                name="wgify-confirm-password"
+                autocomplete="new-password"
+                placeholder="Neues Passwort wiederholen"
                 class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -128,6 +140,7 @@
           <button
             type="button"
             class="px-4 py-2 rounded-md border border-border text-sm font-medium hover:bg-muted transition-colors"
+            @click="changePassword"
           >
             Passwort ändern
           </button>
@@ -320,8 +333,13 @@ const profile = reactive({
 
 const wg = reactive({
   name: '',
-  address: '',
-  currency: 'EUR',
+  address: ''
+})
+
+const passwordForm = reactive({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: '',
 })
 
 const notifs = reactive({
@@ -424,6 +442,53 @@ async function leaveApartment() {
     toast.error(
       'WG konnte nicht verlassen werden',
       error.response?.data?.message || 'Bitte versuche es erneut.'
+    )
+  }
+}
+
+async function changePassword() {
+  if (!passwordForm.currentPassword) {
+    toast.error('Aktuelles Passwort fehlt', 'Bitte gib dein aktuelles Passwort ein.')
+    return
+  }
+
+  if (!passwordForm.newPassword) {
+    toast.error('Neues Passwort fehlt', 'Bitte gib ein neues Passwort ein.')
+    return
+  }
+
+  if (passwordForm.newPassword.length < 8) {
+    toast.error('Passwort zu kurz', 'Das neue Passwort muss mindestens 8 Zeichen lang sein.')
+    return
+  }
+
+  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    toast.error('Passwörter stimmen nicht überein', 'Bitte bestätige dein neues Passwort korrekt.')
+    return
+  }
+
+  try {
+    await authStore.changePassword({
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword,
+      confirmPassword: passwordForm.confirmPassword,
+    })
+
+    passwordForm.currentPassword = ''
+    passwordForm.newPassword = ''
+    passwordForm.confirmPassword = ''
+
+    toast.success(
+      'Passwort geändert',
+      'Du kannst dich ab jetzt nur noch mit deinem neuen Passwort anmelden.'
+    )
+  } catch (error) {
+    toast.error(
+      'Passwort konnte nicht geändert werden',
+      error.response?.data?.errors?.current_password?.[0] ||
+        error.response?.data?.errors?.password?.[0] ||
+        error.response?.data?.message ||
+        'Bitte versuche es erneut.'
     )
   }
 }

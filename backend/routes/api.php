@@ -787,6 +787,8 @@ Route::post('/apartments/leave', function (Request $request) use ($getCurrentUse
         }
     }
 
+    
+
     // Mail an verbleibende Mitglieder
     foreach ($remainingMembers as $member) {
         Mail::to($member->email)->send(
@@ -815,5 +817,35 @@ Route::post('/apartments/leave', function (Request $request) use ($getCurrentUse
     return response()->json([
         'message' => 'Du hast die WG verlassen.',
         'user' => $userPayload($user->fresh()),
+    ]);
+});
+
+Route::post('/user/password', function (Request $request) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
+
+    $validated = $request->validate([
+        'current_password' => 'required|string',
+        'password' => 'required|string|min:8|confirmed',
+    ], [
+        'current_password.required' => 'Bitte gib dein aktuelles Passwort ein.',
+        'password.required' => 'Bitte gib dein neues Passwort ein.',
+        'password.min' => 'Das neue Passwort muss mindestens 8 Zeichen lang sein.',
+        'password.confirmed' => 'Die neuen Passwörter stimmen nicht überein.',
+    ]);
+
+    if (!Hash::check($validated['current_password'], $currentUser->password)) {
+        return response()->json([
+            'message' => 'Das aktuelle Passwort ist falsch.',
+            'errors' => [
+                'current_password' => ['Das aktuelle Passwort ist falsch.'],
+            ],
+        ], 422);
+    }
+
+    $currentUser->password = Hash::make($validated['password']);
+    $currentUser->save();
+
+    return response()->json([
+        'message' => 'Passwort wurde erfolgreich geändert.',
     ]);
 });
