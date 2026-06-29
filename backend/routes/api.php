@@ -40,6 +40,8 @@ $userPayload = function (User $user) {
         'role' => $user->role,
         'avatar' => $user->avatar_path,
         'apartment_id' => $user->apartment_id ? (string) $user->apartment_id : null,
+        'email_notifications' => $user->email_notifications,
+        'task_reminders' => $user->task_reminders,
         'apartment' => $user->apartment ? [
             'id' => (string) $user->apartment->id,
             'name' => $user->apartment->name,
@@ -194,6 +196,9 @@ Route::get('/tasks/overdue', function (Request $request) use ($getCurrentUser) {
     foreach ($overdueTasks as $task) {
         if (!$task->overdue_notification_sent) {
             foreach ($members as $member) {
+                if (!$member->task_reminders) {
+                    continue;
+                }
                 Mail::to($member->email)->send(
                     new TaskOverdueMail(
                         $member->name,
@@ -219,36 +224,6 @@ Route::get('/tasks/overdue', function (Request $request) use ($getCurrentUser) {
         ];
     });
 });
-// Route::post('/tasks', function (Request $request) use ($getCurrentUser) {
-//     $currentUser = $getCurrentUser($request);
-
-//     if (!$currentUser->apartment_id) {
-//         abort(403, 'Du bist in keiner WG.');
-//     }
-
-//     $validated = $request->validate([
-//         'title' => 'required|string|max:255',
-//         'assignedTo' => 'required|string|max:255',
-//         'dueDate' => 'required|date',
-//         'status' => 'required|in:offen,erledigt',
-//     ]);
-
-//     $task = Task::create([
-//         'apartment_id' => $currentUser->apartment_id,
-//         'title' => $validated['title'],
-//         'assigned_to' => $validated['assignedTo'],
-//         'due_date' => $validated['dueDate'],
-//         'status' => $validated['status'],
-//     ]);
-
-//     return response()->json([
-//         'id' => (string) $task->id,
-//         'title' => $task->title,
-//         'assignedTo' => $task->assigned_to,
-//         'dueDate' => $task->due_date,
-//         'status' => $task->status,
-//     ], 201);
-// });
 
 Route::post('/tasks', function (Request $request) use ($getCurrentUser) {
     $currentUser = $getCurrentUser($request);
@@ -277,14 +252,16 @@ Route::post('/tasks', function (Request $request) use ($getCurrentUser) {
     ->where('apartment_id', $currentUser->apartment_id)
     ->firstOrFail();
 
-    // Mail senden
-    Mail::to($member->email)->send(
-        new TaskAssignedToMemberMail(
-            $member->name,
-            $task->title,
-            $task->due_date
-        )
-    );
+    if ($member->email_notifications) {
+        // Mail senden
+        Mail::to($member->email)->send(
+            new TaskAssignedToMemberMail(
+                $member->name,
+                $task->title,
+                $task->due_date
+            )
+        );
+    }
 
     return response()->json([
         'id' => (string) $task->id,
@@ -502,6 +479,7 @@ Route::post('/apartments/invite', function (Request $request) use ($getCurrentUs
         'message' => 'Einladung wurde gesendet.',
     ]);
 });
+
 Route::get('/invitations/pending-count', function (Request $request) use ($getCurrentUser) {
     $currentUser = $getCurrentUser($request);
 
@@ -634,6 +612,9 @@ Route::post('/register', function (Request $request) use ($userPayload) {
             ->get();
 
         foreach ($otherMembers as $member) {
+            if (!$member->email_notifications) {
+                continue;
+            }
             Mail::to($member->email)->send(
                 new MemberJoinsMail(
                     $member->name,
@@ -671,6 +652,21 @@ Route::post('/login', function (Request $request) use ($userPayload) {
     return response()->json([
         'message' => 'Login erfolgreich',
         'user' => $userPayload($user),
+    ]);
+});
+
+Route::put('/user/notifications', function (Request $request) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
+
+    $data = $request->validate([
+        'email_notifications' => 'sometimes|boolean',
+        'task_reminders' => 'sometimes|boolean',
+    ]);
+
+    $currentUser->update($data);
+
+    return response()->json([
+        'user' => $currentUser->fresh(),
     ]);
 });
 
@@ -789,6 +785,10 @@ Route::post('/apartments/leave', function (Request $request) use ($getCurrentUse
 
     // Mail an verbleibende Mitglieder
     foreach ($remainingMembers as $member) {
+        if (!$member->email_notifications) {
+            continue;
+        }
+
         Mail::to($member->email)->send(
             new MemberLeftNotificationMail(
                 $member->name,

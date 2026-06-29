@@ -29,6 +29,28 @@ export const useAuthStore = defineStore('auth', () => {
 
     return response.data.user
   }
+  
+  async function updateNotificationSettings(payload) {
+    const res = await api.put('/user/notifications', payload)
+
+    console.log('API RESPONSE:', res.data)
+
+    if (!res.data?.user) {
+      throw new Error('User fehlt in API Response')
+    }
+
+    currentUser.value = {
+      ...currentUser.value,
+      ...res.data.user,
+    }
+
+    localStorage.setItem(
+      'currentUser',
+      JSON.stringify(currentUser.value)
+    )
+
+    return res.data
+  }
 
   async function login(email, password) {
     const response = await api.post('/login', {
@@ -38,6 +60,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     currentUser.value = response.data.user
     localStorage.setItem('currentUser', JSON.stringify(response.data.user))
+    localStorage.setItem('token', response.data.token)
 
     return response.data.user
   }
@@ -122,5 +145,7 @@ async function deleteAvatar() {
     updateApartmentSettings,
     updateAvatar,
     deleteAvatar,
+    updateNotificationSettings,
   }
+
 })
