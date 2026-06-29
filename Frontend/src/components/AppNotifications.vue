@@ -84,18 +84,38 @@
 import { onMounted, ref } from 'vue'
 import { Bell } from 'lucide-vue-next'
 import { useNotificationsStore } from '@/stores/notifications'
+import { api } from '@/lib/api'
 
 const isOpen = ref(false)
 const notificationsStore = useNotificationsStore()
 
 onMounted(() => {
   notificationsStore.loadNotifications()
+  loadOverdueTaskNotifications()
 })
+async function loadOverdueTaskNotifications() {
+  try {
+    const response = await api.get('/tasks/overdue')
+
+    response.data.forEach((task) => {
+      notificationsStore.addNotification(
+        'task-overdue',
+        'Überfällige Aufgabe',
+        `Die Aufgabe "${task.title}" war am ${formatDateOnly(task.dueDate)} fällig.`
+      )
+    })
+  } catch (error) {
+    console.error(error)
+  }
+}
 
 function formatDate(date) {
   return new Date(date).toLocaleString('de-DE', {
     dateStyle: 'short',
     timeStyle: 'short',
   })
+}
+function formatDateOnly(date) {
+  return new Date(date).toLocaleDateString('de-DE')
 }
 </script>

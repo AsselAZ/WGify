@@ -17,6 +17,7 @@ use App\Mail\MemberLeftNotificationMail;
 use App\Mail\ApartmentLeftMail;
 use App\Mail\MemberJoinsMail;
 use App\Models\Invitation;
+use App\Mail\TaskOverdueMail;
 
 $getCurrentUser = function (Request $request) {
     $userId = $request->header('X-User-Id');
@@ -174,7 +175,48 @@ Route::get('/tasks', function (Request $request) use ($getCurrentUser) {
             ];
         });
 });
+Route::get('/tasks/overdue', function (Request $request) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
 
+    if (!$currentUser->apartment_id) {
+        return [];
+    }
+
+    $overdueTasks = Task::where('apartment_id', $currentUser->apartment_id)
+        ->where('status', 'offen')
+        ->whereDate('due_date', '<', now()->toDateString())
+        ->get();
+
+    $members = User::where('apartment_id', $currentUser->apartment_id)->get();
+
+    foreach ($overdueTasks as $task) {
+        if (!$task->overdue_notification_sent) {
+            foreach ($members as $member) {
+                Mail::to($member->email)->send(
+                    new TaskOverdueMail(
+                        $member->name,
+                        $task->title,
+                        $task->due_date
+                    )
+                );
+            }
+
+            $task->update([
+                'overdue_notification_sent' => true,
+            ]);
+        }
+    }
+
+    return $overdueTasks->map(function ($task) {
+        return [
+            'id' => (string) $task->id,
+            'title' => $task->title,
+            'assignedTo' => $task->assigned_to,
+            'dueDate' => $task->due_date,
+            'status' => $task->status,
+        ];
+    });
+});
 // Route::post('/tasks', function (Request $request) use ($getCurrentUser) {
 //     $currentUser = $getCurrentUser($request);
 

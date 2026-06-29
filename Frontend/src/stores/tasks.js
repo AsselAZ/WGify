@@ -6,6 +6,7 @@ export const useTasksStore = defineStore('tasks', () => {
   const tasks = ref([])
   const isLoading = ref(false)
   const error = ref(null)
+  const overdueTasks = ref([])
 
   async function loadTasks() {
     isLoading.value = true
@@ -25,6 +26,15 @@ export const useTasksStore = defineStore('tasks', () => {
       isLoading.value = false
     }
   }
+  async function loadOverdueTasks() {
+  try {
+    const response = await api.get('/tasks/overdue')
+
+    overdueTasks.value = response.data
+  } catch (e) {
+    console.error(e)
+  }
+}
 
   async function addTask(task) {
     error.value = null
@@ -89,5 +99,7 @@ export const useTasksStore = defineStore('tasks', () => {
     toggleStatus,
     updateTask,
     deleteTask,
+    overdueTasks,
+    loadOverdueTasks,
   }
 })

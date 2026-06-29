@@ -12,5 +12,6 @@ class Task extends Model
         'assigned_to',
         'due_date',
         'status',
+        'overdue_notification_sent',
     ];
 }
