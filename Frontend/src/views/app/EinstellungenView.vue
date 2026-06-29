@@ -131,7 +131,7 @@
             <label class="text-sm font-medium">WG-Name</label>
             <input
               v-model="wg.name"
-              readonly
+              :readonly="!isAdmin"
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
@@ -151,7 +151,7 @@
             v-if="!isAdmin"
             class="text-xs text-muted-foreground"
           >
-            Nur Admins können Adresse und Währung ändern.
+            Nur Admins können WG-Name und Adresse ändern.
           </p>
         </div>
       </div>
@@ -399,6 +399,7 @@ async function saveSettings() {
 
     if (isAdmin.value) {
       savedUser = await authStore.updateApartmentSettings({
+        name: wg.name,
         address: wg.address,
         currency: wg.currency,
       })
