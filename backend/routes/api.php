@@ -371,11 +371,13 @@ Route::patch('/apartment/settings', function (Request $request) use ($getCurrent
     }
 
     $validated = $request->validate([
+        'name' => 'nullable|string|max:255',
         'address' => 'nullable|string|max:255',
         'currency' => 'required|in:EUR,USD,CHF,GBP',
     ]);
 
     $currentUser->apartment->update([
+        'name' => $validated['name'] ?? null,
         'address' => $validated['address'] ?? null,
         'currency' => $validated['currency'],
     ]);
