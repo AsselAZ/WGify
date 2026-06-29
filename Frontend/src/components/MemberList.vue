@@ -169,7 +169,7 @@
 
 <script setup>
 import AppConfirmDialog from '@/components/AppConfirmDialog.vue'
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import {
   UserPlus,
   Crown,
@@ -196,38 +196,68 @@ const membersStore = useMembersStore()
 
 const isAdmin = computed(() => authStore.currentUser?.role === 'admin')
 
-const currentUserId = computed(() =>
-  String(authStore.currentUser?.id || '')
-)
+const currentUserId = computed(() => {
+  return String(authStore.currentUser?.id || '')
+})
 
-// UI state
+// Dialoge
 const showInviteDialog = ref(false)
+const showRemoveDialog = ref(false)
+const selectedMember = ref(null)
+
+// Invite-Code
+const liveInviteCode = ref('')
+const inviteCodeTimer = ref(null)
 const copied = ref(false)
 
-// Email invite state
-const inviteEmail = ref('')
-const sending = ref(false)
-const successMessage = ref('')
-const errorMessage = ref('')
-
-// Invite code
 const currentUser = computed(() => {
   const savedUser = localStorage.getItem('currentUser')
   return savedUser ? JSON.parse(savedUser) : null
 })
 
-const inviteCode = computed(() =>
-  currentUser.value?.apartment?.inviteCode || ''
-)
+const inviteCode = computed(() => {
+  return liveInviteCode.value || currentUser.value?.apartment?.inviteCode || ''
+})
 
-// Remove member
-function removeMember(member) {
-  if (!confirm(`${member.name} wirklich aus der WG entfernen?`)) return
-  emit('removeMember', member.id)
-
+async function refreshInviteCode() {
+  try {
+    const data = await membersStore.loadInviteCode()
+    liveInviteCode.value = data.inviteCode
+  } catch (error) {
+    console.log('Invite code konnte nicht geladen werden:', error)
+  }
 }
 
-// Copy code
+onMounted(() => {
+  refreshInviteCode()
+
+  inviteCodeTimer.value = setInterval(() => {
+    refreshInviteCode()
+  }, 10000)
+})
+
+onUnmounted(() => {
+  if (inviteCodeTimer.value) {
+    clearInterval(inviteCodeTimer.value)
+  }
+})
+
+// Mitglied entfernen
+function removeMember(member) {
+  selectedMember.value = member
+  showRemoveDialog.value = true
+}
+
+function confirmRemoveMember() {
+  if (!selectedMember.value) {
+    return
+  }
+
+  emit('removeMember', selectedMember.value.id)
+  selectedMember.value = null
+}
+
+// Code kopieren
 async function copyInviteCode() {
   await navigator.clipboard.writeText(inviteCode.value)
   copied.value = true
@@ -237,7 +267,12 @@ async function copyInviteCode() {
   }, 2000)
 }
 
-// Send email invite
+// E-Mail-Einladung
+const inviteEmail = ref('')
+const sending = ref(false)
+const successMessage = ref('')
+const errorMessage = ref('')
+
 async function sendInvite() {
   sending.value = true
   successMessage.value = ''
@@ -245,17 +280,18 @@ async function sendInvite() {
 
   try {
     await api.post('/apartments/invite', {
-  email: inviteEmail.value,
-})
+      email: inviteEmail.value,
+    })
 
-await membersStore.loadPendingInvitationsCount()
+    await membersStore.loadPendingInvitationsCount()
 
-successMessage.value = 'Einladung wurde gesendet!'
-inviteEmail.value = ''
+    successMessage.value = 'Einladung wurde gesendet!'
+    inviteEmail.value = ''
   } catch (err) {
     console.log(err.response?.data || err)
-    errorMessage.value = err.response?.data?.message || 'Fehler beim Senden der Einladung'
-} finally {
+    errorMessage.value =
+      err.response?.data?.message || 'Fehler beim Senden der Einladung'
+  } finally {
     sending.value = false
   }
 }

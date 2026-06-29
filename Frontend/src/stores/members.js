@@ -32,6 +32,11 @@ export const useMembersStore = defineStore('members', () => {
   const response = await api.get('/invitations/pending-count')
   pendingInvitationsCount.value = response.data.count
 }
+//Neuer Code
+async function loadInviteCode() {
+  const response = await api.get('/apartment/invite-code')
+  return response.data
+}
 
   return {
     members,
@@ -40,6 +45,8 @@ export const useMembersStore = defineStore('members', () => {
     pendingInvitationsCount,
     loadMembers,
     removeMember,
-    loadPendingInvitationsCount
+    loadPendingInvitationsCount,
+    loadInviteCode
   }
+
 })
