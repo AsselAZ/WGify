@@ -343,33 +343,21 @@ const passwordForm = reactive({
 })
 
 const notifs = reactive({
-  email: true,
-  push: false,
-  tasks: true,
-  expenses: true,
+  email_notifications: true,
+  task_reminders: true,
 })
 
 const notifItems = [
   {
-    key: 'email',
+    key: 'email_notifications',
     label: 'E-Mail Benachrichtigungen',
     desc: 'Erhalte Updates per E-Mail',
   },
   {
-    key: 'push',
-    label: 'Push Benachrichtigungen',
-    desc: 'Browser Push-Nachrichten',
-  },
-  {
-    key: 'tasks',
+    key: 'task_reminders',
     label: 'Aufgaben-Erinnerungen',
     desc: 'Erinnerungen für anstehende Aufgaben',
-  },
-  {
-    key: 'expenses',
-    label: 'Ausgaben-Updates',
-    desc: 'Benachrichtigungen bei neuen Ausgaben',
-  },
+  }
 ]
 
 function loadProfileData() {
@@ -387,8 +375,8 @@ function loadApartmentData() {
   wg.currency = authStore.currentUser?.apartment?.currency || 'EUR'
 }
 
-onMounted(() => {
-  authStore.loadUser()
+onMounted(async () => {
+  await authStore.loadUser()
 
   if (!authStore.currentUser) {
     router.push('/login')
@@ -398,14 +386,21 @@ onMounted(() => {
   loadProfileData()
   loadApartmentData()
 
-  const savedSettings = localStorage.getItem('settings')
+  // const savedSettings = localStorage.getItem('settings')
 
-  if (savedSettings) {
-    const settings = JSON.parse(savedSettings)
+  // if (savedSettings) {
+  //   const settings = JSON.parse(savedSettings)
 
-    if (settings.notifs) {
-      Object.assign(notifs, settings.notifs)
-    }
+  //   if (settings.notifs) {
+  //     Object.assign(notifs, settings.notifs)
+  //   }
+  // }
+
+  const user = authStore.currentUser
+
+  if (user) {
+    notifs.email_notifications = user.email_notifications ?? true
+    notifs.task_reminders = user.task_reminders ?? true
   }
 })
 
@@ -494,54 +489,31 @@ async function changePassword() {
 }
 
 async function saveSettings() {
-  profile.avatar = profile.name.charAt(0).toUpperCase()
-
   try {
-    let savedUser = authStore.currentUser
+    profile.avatar = profile.name.charAt(0).toUpperCase()
 
-    if (isAdmin.value) {
-      savedUser = await authStore.updateApartmentSettings({
-        name: wg.name,
-        address: wg.address,
-        currency: wg.currency,
-      })
-    }
+    // DB speichern
+    await authStore.updateNotificationSettings({
+      email_notifications: notifs.email_notifications,
+      task_reminders: notifs.task_reminders,
+    })
 
-    if (savedUser) {
-      const finalUser = {
-        ...savedUser,
-        name: profile.name,
-        email: profile.email,
-        avatar: profile.avatar,
-      }
-
-      authStore.currentUser = finalUser
-      localStorage.setItem('currentUser', JSON.stringify(finalUser))
-
-      wg.name = finalUser.apartment?.name || ''
-      wg.address = finalUser.apartment?.address || ''
-      wg.currency = finalUser.apartment?.currency || 'EUR'
-    }
+    // UI aktualisieren
+    authStore.currentUser.name = profile.name
+    authStore.currentUser.email = profile.email
+    authStore.currentUser.avatar = profile.avatar
 
     localStorage.setItem(
-      'settings',
-      JSON.stringify({
-        notifs,
-      })
+      'currentUser',
+      JSON.stringify(authStore.currentUser)
     )
 
-    toast.success(
-      'Einstellungen gespeichert',
-      'Deine Änderungen wurden erfolgreich gespeichert.'
-    )
+    toast.success('Einstellungen gespeichert')
   } catch (error) {
-    toast.error(
-      'Speichern fehlgeschlagen',
-      error.response?.data?.message || 'Einstellungen konnten nicht gespeichert werden.'
-    )
+    console.error(error)
+    toast.error(error.response?.data?.message || 'Fehler beim Speichern')
   }
 }
-
 
 function openAvatarPicker() {
   avatarInput.value.click()
