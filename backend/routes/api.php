@@ -418,7 +418,6 @@ Route::post('/apartments/create', function (Request $request) use ($getCurrentUs
         'currency' => 'EUR',
         'invite_code' => $inviteCode,
         'invite_code_updated_at' => now(),
-        $apartment->save(),
     ]);
 
     $currentUser->update([
@@ -432,7 +431,7 @@ Route::post('/apartments/create', function (Request $request) use ($getCurrentUs
     ], 201);
 });
 
-Route::post('/apartments/join', function (Request $request) use ($getCurrentUser, $userPayload) {
+Route::post('/apartments/join', function (Request $request) use ($getCurrentUser, $userPayload, $refreshInviteCodeIfExpired) {
     $currentUser = $getCurrentUser($request);
 
     if ($currentUser->apartment_id) {
@@ -453,7 +452,16 @@ Route::post('/apartments/join', function (Request $request) use ($getCurrentUser
 
     if (!$apartment) {
         throw ValidationException::withMessages([
-            'inviteCode' => ['Dieser Einladungscode ist ungültig.'],
+            'inviteCode' => ['Dieser Einladungscode ist ungültig oder abgelaufen.'],
+        ]);
+    }
+
+    $refreshInviteCodeIfExpired($apartment);
+    $apartment->refresh();
+
+    if ($apartment->invite_code !== $validated['inviteCode']) {
+        throw ValidationException::withMessages([
+            'inviteCode' => ['Dieser Einladungscode ist abgelaufen. Bitte fordere den neuen Code an.'],
         ]);
     }
 
@@ -571,7 +579,7 @@ Route::delete('/profile/avatar', function (Request $request) use ($getCurrentUse
 });
 // Auth ----------------------------------------------------------------
 
-Route::post('/apartments/join', function (Request $request) use ($getCurrentUser, $userPayload, $refreshInviteCodeIfExpired) {
+Route::post('/register', function (Request $request) use ($userPayload, $refreshInviteCodeIfExpired) {
     $request->merge([
         'email' => strtolower($request->email),
         'inviteCode' => $request->inviteCode ? strtoupper(trim($request->inviteCode)) : null,
@@ -608,7 +616,6 @@ Route::post('/apartments/join', function (Request $request) use ($getCurrentUser
             'currency' => 'EUR',
             'invite_code' => $inviteCode,
             'invite_code_updated_at' => now(),
-            $apartment->save(),
         ]);
 
         $role = 'admin';
