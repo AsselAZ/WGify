@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Carbon;
 use App\Mail\ApartmentInviteMail;
 use App\Mail\MemberRemovedMail;
 use App\Mail\TaskAssignedToMemberMail;
@@ -30,8 +31,36 @@ $getCurrentUser = function (Request $request) {
     return User::with('apartment')->findOrFail($userId);
 };
 
-$userPayload = function (User $user) {
+$refreshInviteCodeIfExpired = function (Apartment $apartment) {
+    $lastUpdated = $apartment->invite_code_updated_at
+        ? Carbon::parse($apartment->invite_code_updated_at)
+        : null;
+
+    if ($lastUpdated && $lastUpdated->gt(now()->subMinutes(5))) {
+        return $apartment;
+    }
+
+    do {
+        $newInviteCode = strtoupper(Str::random(6));
+    } while (Apartment::where('invite_code', $newInviteCode)
+        ->where('id', '!=', $apartment->id)
+        ->exists());
+
+    $apartment->invite_code = $newInviteCode;
+    $apartment->invite_code_updated_at = now();
+    $apartment->save();
+
+    return $apartment->fresh();
+};
+
+$userPayload = function (User $user) use ($refreshInviteCodeIfExpired) {
     $user->load('apartment');
+
+    //Der User bekommt den aktuellen code
+    if ($user->apartment) {
+        $refreshInviteCodeIfExpired($user->apartment);
+        $user->load('apartment');
+    }
 
     return [
         'id' => (string) $user->id,
@@ -388,6 +417,8 @@ Route::post('/apartments/create', function (Request $request) use ($getCurrentUs
         'name' => $validated['apartmentName'],
         'currency' => 'EUR',
         'invite_code' => $inviteCode,
+        'invite_code_updated_at' => now(),
+        $apartment->save(),
     ]);
 
     $currentUser->update([
@@ -540,7 +571,7 @@ Route::delete('/profile/avatar', function (Request $request) use ($getCurrentUse
 });
 // Auth ----------------------------------------------------------------
 
-Route::post('/register', function (Request $request) use ($userPayload) {
+Route::post('/apartments/join', function (Request $request) use ($getCurrentUser, $userPayload, $refreshInviteCodeIfExpired) {
     $request->merge([
         'email' => strtolower($request->email),
         'inviteCode' => $request->inviteCode ? strtoupper(trim($request->inviteCode)) : null,
@@ -576,6 +607,8 @@ Route::post('/register', function (Request $request) use ($userPayload) {
             'name' => $validated['apartmentName'],
             'currency' => 'EUR',
             'invite_code' => $inviteCode,
+            'invite_code_updated_at' => now(),
+            $apartment->save(),
         ]);
 
         $role = 'admin';
@@ -584,7 +617,16 @@ Route::post('/register', function (Request $request) use ($userPayload) {
 
         if (!$apartment) {
             throw ValidationException::withMessages([
-                'inviteCode' => ['Dieser Einladungscode ist ungültig.'],
+                'inviteCode' => ['Dieser Einladungscode ist ungültig oder abgelaufen.'],
+            ]);
+        }
+
+        $refreshInviteCodeIfExpired($apartment);
+        $apartment->refresh();
+
+        if ($apartment->invite_code !== $validated['inviteCode']) {
+            throw ValidationException::withMessages([
+                'inviteCode' => ['Dieser Einladungscode ist abgelaufen. Bitte fordere den neuen Code an.'],
             ]);
         }
 
@@ -629,6 +671,24 @@ Route::post('/register', function (Request $request) use ($userPayload) {
         'message' => 'Registrierung erfolgreich',
         'user' => $userPayload($user),
     ], 201);
+});
+
+//Für den neuen generierten code
+Route::get('/apartment/invite-code', function (Request $request) use ($getCurrentUser, $refreshInviteCodeIfExpired) {
+    $currentUser = $getCurrentUser($request);
+
+    if (!$currentUser->apartment_id) {
+        abort(403, 'Du bist in keiner WG.');
+    }
+
+    $apartment = $refreshInviteCodeIfExpired($currentUser->apartment);
+
+    return response()->json([
+        'inviteCode' => $apartment->invite_code,
+        'validUntil' => Carbon::parse($apartment->invite_code_updated_at)
+            ->addMinutes(5)
+            ->toISOString(),
+    ]);
 });
 
 Route::post('/login', function (Request $request) use ($userPayload) {
@@ -783,6 +843,8 @@ Route::post('/apartments/leave', function (Request $request) use ($getCurrentUse
         }
     }
 
+    
+
     // Mail an verbleibende Mitglieder
     foreach ($remainingMembers as $member) {
         if (!$member->email_notifications) {
@@ -815,5 +877,35 @@ Route::post('/apartments/leave', function (Request $request) use ($getCurrentUse
     return response()->json([
         'message' => 'Du hast die WG verlassen.',
         'user' => $userPayload($user->fresh()),
+    ]);
+});
+
+Route::post('/user/password', function (Request $request) use ($getCurrentUser) {
+    $currentUser = $getCurrentUser($request);
+
+    $validated = $request->validate([
+        'current_password' => 'required|string',
+        'password' => 'required|string|min:8|confirmed',
+    ], [
+        'current_password.required' => 'Bitte gib dein aktuelles Passwort ein.',
+        'password.required' => 'Bitte gib dein neues Passwort ein.',
+        'password.min' => 'Das neue Passwort muss mindestens 8 Zeichen lang sein.',
+        'password.confirmed' => 'Die neuen Passwörter stimmen nicht überein.',
+    ]);
+
+    if (!Hash::check($validated['current_password'], $currentUser->password)) {
+        return response()->json([
+            'message' => 'Das aktuelle Passwort ist falsch.',
+            'errors' => [
+                'current_password' => ['Das aktuelle Passwort ist falsch.'],
+            ],
+        ], 422);
+    }
+
+    $currentUser->password = Hash::make($validated['password']);
+    $currentUser->save();
+
+    return response()->json([
+        'message' => 'Passwort wurde erfolgreich geändert.',
     ]);
 });

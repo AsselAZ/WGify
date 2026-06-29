@@ -106,28 +106,40 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function updateAvatar(file) {
-  const formData = new FormData()
-  formData.append('avatar', file)
+    const formData = new FormData()
+    formData.append('avatar', file)
 
-  const response = await api.post('/profile/avatar', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  })
+    const response = await api.post('/profile/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
 
-  currentUser.value = response.data.user
-  localStorage.setItem('currentUser', JSON.stringify(response.data.user))
+    currentUser.value = response.data.user
+    localStorage.setItem('currentUser', JSON.stringify(response.data.user))
 
-  return response.data.user
-}
-async function deleteAvatar() {
-  const response = await api.delete('/profile/avatar')
+    return response.data.user
+  }
 
-  currentUser.value = response.data.user
-  localStorage.setItem('currentUser', JSON.stringify(response.data.user))
+  async function deleteAvatar() {
+    const response = await api.delete('/profile/avatar')
 
-  return response.data.user
-}
+    currentUser.value = response.data.user
+    localStorage.setItem('currentUser', JSON.stringify(response.data.user))
+
+    return response.data.user
+  }
+
+  async function changePassword(data) {
+    const response = await api.post('/user/password', {
+      current_password: data.currentPassword,
+      password: data.newPassword,
+      password_confirmation: data.confirmPassword,
+    })
+
+    return response.data
+  }
+
   function logout() {
     currentUser.value = null
     localStorage.removeItem('currentUser')
@@ -146,6 +158,7 @@ async function deleteAvatar() {
     updateAvatar,
     deleteAvatar,
     updateNotificationSettings,
+    changePassword,
   }
 
 })
