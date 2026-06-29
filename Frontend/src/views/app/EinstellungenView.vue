@@ -25,17 +25,43 @@
         <div class="space-y-4">
           <div class="flex items-center gap-4">
             <div
-              class="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground text-2xl font-semibold"
-            >
-              {{ profile.avatar }}
-            </div>
+  class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary text-primary-foreground text-2xl font-semibold"
+>
+  <img
+    v-if="avatarUrl"
+    :src="avatarUrl"
+    alt="Profilbild"
+    class="h-full w-full object-cover"
+  />
 
-            <button
-              type="button"
-              class="px-4 py-2 rounded-md border border-border text-sm font-medium hover:bg-muted transition-colors"
-            >
-              Bild ändern
-            </button>
+  <span v-else>
+    {{ profile.avatar }}
+  </span>
+</div>
+
+<input
+  ref="avatarInput"
+  type="file"
+  accept="image/png,image/jpeg,image/jpg,image/webp"
+  class="hidden"
+  @change="handleAvatarChange"
+/>
+
+<button
+  type="button"
+  @click="openAvatarPicker"
+  class="px-4 py-2 rounded-md border border-border text-sm font-medium hover:bg-muted transition-colors"
+>
+  Bild ändern
+</button>
+<button
+  v-if="avatarUrl"
+  type="button"
+  @click="deleteAvatar()"
+  class="px-4 py-2 rounded-md border border-border text-sm font-medium text-red-600 hover:bg-muted transition-colors"
+>
+  Bild löschen
+</button>
           </div>
 
           <div class="grid gap-4 sm:grid-cols-2">
@@ -259,6 +285,7 @@ import { useToastStore } from '@/stores/toast'
 import { useMembersStore } from '@/stores/members'
 import { useNotificationsStore } from '@/stores/notifications'
 
+
 const authStore = useAuthStore()
 const router = useRouter()
 const toast = useToastStore()
@@ -266,6 +293,16 @@ const membersStore = useMembersStore()
 const notifications = useNotificationsStore()
 
 const showLeaveDialog = ref(false)
+
+const avatarInput = ref(null)
+
+const avatarUrl = computed(() => {
+  if (!authStore.currentUser?.avatar) {
+    return null
+  }
+
+  return `http://127.0.0.1:8000/storage/${authStore.currentUser.avatar}`
+})
 
 const isAdmin = computed(() => {
   return authStore.currentUser?.role === 'admin'
@@ -438,5 +475,25 @@ async function saveSettings() {
       error.response?.data?.message || 'Einstellungen konnten nicht gespeichert werden.'
     )
   }
+}
+
+
+function openAvatarPicker() {
+  avatarInput.value.click()
+}
+async function deleteAvatar() {
+  await authStore.deleteAvatar()
+}
+
+async function handleAvatarChange(event) {
+  const file = event.target.files[0]
+
+  if (!file) {
+    return
+  }
+
+  await authStore.updateAvatar(file)
+
+  event.target.value = ''
 }
 </script>

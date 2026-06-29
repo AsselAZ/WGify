@@ -82,6 +82,29 @@ export const useAuthStore = defineStore('auth', () => {
     return response.data.user
   }
 
+  async function updateAvatar(file) {
+  const formData = new FormData()
+  formData.append('avatar', file)
+
+  const response = await api.post('/profile/avatar', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+
+  currentUser.value = response.data.user
+  localStorage.setItem('currentUser', JSON.stringify(response.data.user))
+
+  return response.data.user
+}
+async function deleteAvatar() {
+  const response = await api.delete('/profile/avatar')
+
+  currentUser.value = response.data.user
+  localStorage.setItem('currentUser', JSON.stringify(response.data.user))
+
+  return response.data.user
+}
   function logout() {
     currentUser.value = null
     localStorage.removeItem('currentUser')
@@ -97,5 +120,7 @@ export const useAuthStore = defineStore('auth', () => {
     joinApartment,
     leaveApartment,
     updateApartmentSettings,
+    updateAvatar,
+    deleteAvatar,
   }
 })

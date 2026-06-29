@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Storage;
 use App\Mail\ApartmentInviteMail;
 use App\Mail\MemberRemovedMail;
 use App\Mail\TaskAssignedToMemberMail;
@@ -37,6 +38,7 @@ $userPayload = function (User $user) {
         'name' => $user->name,
         'email' => $user->email,
         'role' => $user->role,
+        'avatar' => $user->avatar_path,
         'apartment_id' => $user->apartment_id ? (string) $user->apartment_id : null,
         'apartment' => $user->apartment ? [
             'id' => (string) $user->apartment->id,
@@ -519,6 +521,45 @@ Route::get('/invitations/pending-count', function (Request $request) use ($getCu
     ]);
 });
 
+Route::post('/profile/avatar', function (Request $request) use ($getCurrentUser, $userPayload) {
+    $currentUser = $getCurrentUser($request);
+
+    $validated = $request->validate([
+        'avatar' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+    ]);
+
+    if ($currentUser->avatar_path) {
+        Storage::disk('public')->delete($currentUser->avatar_path);
+    }
+
+    $path = $validated['avatar']->store('avatars', 'public');
+
+    $currentUser->update([
+        'avatar_path' => $path,
+    ]);
+
+    return response()->json([
+        'message' => 'Profilbild wurde gespeichert.',
+        'user' => $userPayload($currentUser->fresh()),
+    ]);
+});
+
+Route::delete('/profile/avatar', function (Request $request) use ($getCurrentUser, $userPayload) {
+    $currentUser = $getCurrentUser($request);
+
+    if ($currentUser->avatar_path) {
+        Storage::disk('public')->delete($currentUser->avatar_path);
+    }
+
+    $currentUser->update([
+        'avatar_path' => null,
+    ]);
+
+    return response()->json([
+        'message' => 'Profilbild wurde gelöscht.',
+        'user' => $userPayload($currentUser->fresh()),
+    ]);
+});
 // Auth ----------------------------------------------------------------
 
 Route::post('/register', function (Request $request) use ($userPayload) {
