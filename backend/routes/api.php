@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use App\Mail\ApartmentInviteMail;
 use App\Mail\MemberRemovedMail;
 use App\Mail\TaskAssignedToMemberMail;
@@ -28,7 +29,13 @@ $getCurrentUser = function (Request $request) {
         abort(401, 'Kein Benutzer angemeldet.');
     }
 
-    return User::with('apartment')->findOrFail($userId);
+    $user = User::with('apartment')->findOrFail($userId);
+
+    if (!$user->email_verified_at) {
+        abort(403, 'Bitte bestätige zuerst deine E-Mail-Adresse.');
+    }
+
+    return $user;
 };
 
 $refreshInviteCodeIfExpired = function (Apartment $apartment) {
@@ -71,6 +78,8 @@ $userPayload = function (User $user) use ($refreshInviteCodeIfExpired) {
         'apartment_id' => $user->apartment_id ? (string) $user->apartment_id : null,
         'email_notifications' => $user->email_notifications,
         'task_reminders' => $user->task_reminders,
+        'email_verified_at' => $user->email_verified_at,
+        'emailVerified' => (bool) $user->email_verified_at,
         'apartment' => $user->apartment ? [
             'id' => (string) $user->apartment->id,
             'name' => $user->apartment->name,
@@ -79,6 +88,38 @@ $userPayload = function (User $user) use ($refreshInviteCodeIfExpired) {
             'inviteCode' => $user->apartment->invite_code,
         ] : null,
     ];
+};
+
+//Email Bestätigung beim registrieren
+$sendEmailVerificationCode = function (User $user) {
+    DB::table('email_verification_codes')
+        ->where('user_id', $user->id)
+        ->whereNull('used_at')
+        ->delete();
+
+    $code = (string) random_int(100000, 999999);
+
+    DB::table('email_verification_codes')->insert([
+        'user_id' => $user->id,
+        'email' => $user->email,
+        'code_hash' => Hash::make($code),
+        'expires_at' => now()->addMinutes(5),
+        'used_at' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    Mail::raw(
+        "Hallo {$user->name},\n\n" .
+        "dein WGify-Bestätigungscode lautet:\n\n" .
+        "{$code}\n\n" .
+        "Der Code ist 5 Minuten gültig.\n\n" .
+        "Falls du dich nicht registriert hast, kannst du diese E-Mail ignorieren.",
+        function ($message) use ($user) {
+            $message->to($user->email)
+                ->subject('WGify E-Mail bestätigen');
+        }
+    );
 };
 
 // Ausgaben ----------------------------------------------------------------
@@ -579,7 +620,7 @@ Route::delete('/profile/avatar', function (Request $request) use ($getCurrentUse
 });
 // Auth ----------------------------------------------------------------
 
-Route::post('/register', function (Request $request) use ($userPayload, $refreshInviteCodeIfExpired) {
+Route::post('/register', function (Request $request) use ($userPayload, $refreshInviteCodeIfExpired, $sendEmailVerificationCode) {
     $request->merge([
         'email' => strtolower($request->email),
         'inviteCode' => $request->inviteCode ? strtoupper(trim($request->inviteCode)) : null,
@@ -647,6 +688,7 @@ Route::post('/register', function (Request $request) use ($userPayload, $refresh
         'apartment_id' => $apartment->id,
         'role' => $role,
     ]);
+    $sendEmailVerificationCode($user);
     Invitation::where('apartment_id', $apartment->id)
     ->where('email', $validated['email'])
     ->where('status', 'pending')
@@ -675,10 +717,108 @@ Route::post('/register', function (Request $request) use ($userPayload, $refresh
     }
 
     return response()->json([
-        'message' => 'Registrierung erfolgreich',
-        'user' => $userPayload($user),
+        'message' => 'Registrierung erfolgreich. Bitte bestätige deine E-Mail-Adresse.',
+        'requiresEmailVerification' => true,
+        'email' => $user->email,
     ], 201);
 });
+
+Route::post('/email/verify', function (Request $request) use ($userPayload) {
+    $request->merge([
+        'email' => strtolower($request->email),
+        'code' => $request->code ? trim($request->code) : null,
+    ]);
+
+    $validated = $request->validate([
+        'email' => 'required|email',
+        'code' => 'required|string|size:6',
+    ], [
+        'email.required' => 'Bitte gib deine E-Mail-Adresse ein.',
+        'email.email' => 'Bitte gib eine gültige E-Mail-Adresse ein.',
+        'code.required' => 'Bitte gib den Bestätigungscode ein.',
+        'code.size' => 'Der Code muss 6 Ziffern haben.',
+    ]);
+
+    $user = User::where('email', $validated['email'])->first();
+
+    if (!$user) {
+        throw ValidationException::withMessages([
+            'email' => ['Diese E-Mail-Adresse ist nicht registriert.'],
+        ]);
+    }
+
+    if ($user->email_verified_at) {
+        return response()->json([
+            'message' => 'E-Mail-Adresse ist bereits bestätigt.',
+            'user' => $userPayload($user),
+        ]);
+    }
+
+    $verificationCode = DB::table('email_verification_codes')
+        ->where('user_id', $user->id)
+        ->where('email', $validated['email'])
+        ->whereNull('used_at')
+        ->latest()
+        ->first();
+
+    if (!$verificationCode) {
+        throw ValidationException::withMessages([
+            'code' => ['Der Code ist ungültig oder abgelaufen.'],
+        ]);
+    }
+
+    if (now()->greaterThan($verificationCode->expires_at)) {
+        throw ValidationException::withMessages([
+            'code' => ['Der Code ist abgelaufen. Bitte fordere einen neuen Code an.'],
+        ]);
+    }
+
+    if (!Hash::check($validated['code'], $verificationCode->code_hash)) {
+        throw ValidationException::withMessages([
+            'code' => ['Der Code ist falsch.'],
+        ]);
+    }
+
+    $user->email_verified_at = now();
+    $user->save();
+
+    DB::table('email_verification_codes')
+        ->where('id', $verificationCode->id)
+        ->update([
+            'used_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+    return response()->json([
+        'message' => 'E-Mail-Adresse wurde erfolgreich bestätigt.',
+        'user' => $userPayload($user->fresh()),
+    ]);
+});
+
+Route::post('/email/resend-verification', function (Request $request) use ($sendEmailVerificationCode) {
+    $request->merge([
+        'email' => strtolower($request->email),
+    ]);
+
+    $validated = $request->validate([
+        'email' => 'required|email',
+    ]);
+
+    $user = User::where('email', $validated['email'])->first();
+
+    if (!$user || $user->email_verified_at) {
+        return response()->json([
+            'message' => 'Falls diese E-Mail registriert und noch nicht bestätigt ist, wurde ein neuer Code gesendet.',
+        ]);
+    }
+
+    $sendEmailVerificationCode($user);
+
+    return response()->json([
+        'message' => 'Ein neuer Bestätigungscode wurde gesendet.',
+    ]);
+});
+
 
 //Für den neuen generierten code
 Route::get('/apartment/invite-code', function (Request $request) use ($getCurrentUser, $refreshInviteCodeIfExpired) {
@@ -698,7 +838,7 @@ Route::get('/apartment/invite-code', function (Request $request) use ($getCurren
     ]);
 });
 
-Route::post('/login', function (Request $request) use ($userPayload) {
+Route::post('/login', function (Request $request) use ($userPayload, $sendEmailVerificationCode) {
     $request->merge([
         'email' => strtolower($request->email),
     ]);
@@ -714,6 +854,16 @@ Route::post('/login', function (Request $request) use ($userPayload) {
         throw ValidationException::withMessages([
             'email' => ['E-Mail oder Passwort ist falsch.'],
         ]);
+    }
+
+    if (!$user->email_verified_at) {
+        $sendEmailVerificationCode($user);
+
+        return response()->json([
+            'message' => 'Bitte bestätige zuerst deine E-Mail-Adresse.',
+            'requiresEmailVerification' => true,
+            'email' => $user->email,
+        ], 403);
     }
 
     return response()->json([

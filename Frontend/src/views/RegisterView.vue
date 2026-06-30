@@ -207,7 +207,6 @@ const submitLabel = computed(() => {
 })
 
 async function handleSubmit() {
-
   if (form.password !== form.confirm) {
     toast.error('Registrierung fehlgeschlagen', 'Die Passwörter stimmen nicht überein.')
     return
@@ -226,7 +225,7 @@ async function handleSubmit() {
   isLoading.value = true
 
   try {
-    await authStore.register({
+    const result = await authStore.register({
       name: form.name,
       email: form.email,
       password: form.password,
@@ -235,6 +234,23 @@ async function handleSubmit() {
       apartmentName: form.apartmentName,
       inviteCode: form.inviteCode,
     })
+
+    if (result.requiresEmailVerification) {
+      toast.success(
+        'Registrierung erfolgreich',
+        'Bitte bestätige jetzt deine E-Mail-Adresse.'
+      )
+
+      router.push({
+        path: '/email-bestaetigen',
+        query: {
+          email: result.email,
+        },
+      })
+
+      return
+    }
+
     if (form.mode === 'join') {
       await membersStore.loadMembers()
 
@@ -247,16 +263,15 @@ async function handleSubmit() {
           notifications.addNotificationForUser(
             member.email,
             'member-joined',
+            'Neues Mitglied',
             `${joinedUserName} ist der WG beigetreten.`
-            
           )
         })
     }
+
     toast.success('Registrierung erfolgreich', 'Dein Konto wurde erstellt.')
-
-    router.push('/app/dashboard') //Erfolgereiche Registrierung
-
-    } catch (error) {
+    router.push('/app/dashboard')
+  } catch (error) {
     console.log('Register error:', error)
     console.log('Register response:', error.response?.data)
 

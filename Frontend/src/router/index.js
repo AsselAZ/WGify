@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import EmailVerificationView from '@/views/EmailVerificationView.vue'
 
 function getSavedUser() {
   const savedUser = localStorage.getItem('currentUser')
@@ -28,6 +29,11 @@ const router = createRouter({
     {
       path: '/wg-auswahl',
       component: () => import('@/views/ApartmentSetupView.vue'),
+    },
+    {
+      path: '/email-bestaetigen',
+      name: 'email-verification',
+      component: EmailVerificationView,
     },
     {
       path: '/app',

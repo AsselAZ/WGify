@@ -24,10 +24,36 @@ export const useAuthStore = defineStore('auth', () => {
       inviteCode: data.inviteCode,
     })
 
+    if (response.data.requiresEmailVerification) {
+      return response.data
+    }
+
+    currentUser.value = response.data.user
+    localStorage.setItem('currentUser', JSON.stringify(response.data.user))
+
+    return response.data
+  }
+//Email bestätigen
+  async function verifyEmail(email, code) {
+    const response = await api.post('/email/verify', {
+      email,
+      code,
+    })
+
     currentUser.value = response.data.user
     localStorage.setItem('currentUser', JSON.stringify(response.data.user))
 
     return response.data.user
+  }
+
+
+
+  async function resendEmailVerification(email) {
+    const response = await api.post('/email/resend-verification', {
+      email,
+    })
+
+    return response.data
   }
   
   async function updateNotificationSettings(payload) {
@@ -149,6 +175,8 @@ export const useAuthStore = defineStore('auth', () => {
     currentUser,
     loadUser,
     register,
+    verifyEmail,
+    resendEmailVerification,
     login,
     logout,
     createApartment,
