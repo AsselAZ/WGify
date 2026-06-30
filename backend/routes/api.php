@@ -620,6 +620,114 @@ Route::delete('/profile/avatar', function (Request $request) use ($getCurrentUse
 });
 // Auth ----------------------------------------------------------------
 
+Route::post('/password/forgot', function (Request $request) {
+    $request->merge([
+        'email' => strtolower($request->email),
+    ]);
+
+    $validated = $request->validate([
+        'email' => 'required|email',
+    ], [
+        'email.required' => 'Bitte gib deine E-Mail-Adresse ein.',
+        'email.email' => 'Bitte gib eine gültige E-Mail-Adresse ein.',
+    ]);
+
+    $user = User::where('email', $validated['email'])->first();
+
+    if ($user) {
+        DB::table('password_reset_tokens')
+            ->where('email', $user->email)
+            ->delete();
+
+        $token = Str::random(64);
+
+        DB::table('password_reset_tokens')->insert([
+            'email' => $user->email,
+            'token' => Hash::make($token),
+            'created_at' => now(),
+        ]);
+
+        $resetLink = "http://localhost:5173/passwort-zuruecksetzen?email={$user->email}&token={$token}";
+
+        Mail::raw(
+            "Hallo {$user->name},\n\n" .
+            "du hast angefordert, dein Passwort zurückzusetzen.\n\n" .
+            "Klicke auf diesen Link:\n{$resetLink}\n\n" .
+            "Der Link ist 30 Minuten gültig.\n\n" .
+            "Falls du das nicht warst, ignoriere diese E-Mail.",
+            function ($message) use ($user) {
+                $message->to($user->email)
+                    ->subject('WGify Passwort zurücksetzen');
+            }
+        );
+    }
+
+    return response()->json([
+        'message' => 'Falls diese E-Mail existiert, erhältst du eine E-Mail zum Zurücksetzen deines Passworts.',
+    ]);
+});
+
+Route::post('/password/reset', function (Request $request) {
+    $request->merge([
+        'email' => strtolower($request->email),
+    ]);
+
+    $validated = $request->validate([
+        'email' => 'required|email',
+        'token' => 'required|string',
+        'password' => 'required|string|min:8|confirmed',
+    ], [
+        'password.required' => 'Bitte gib ein neues Passwort ein.',
+        'password.min' => 'Das Passwort muss mindestens 8 Zeichen lang sein.',
+        'password.confirmed' => 'Die Passwörter stimmen nicht überein.',
+    ]);
+
+    $resetEntry = DB::table('password_reset_tokens')
+        ->where('email', $validated['email'])
+        ->first();
+
+    if (!$resetEntry) {
+        throw ValidationException::withMessages([
+            'email' => ['Dieser Zurücksetzen-Link ist ungültig.'],
+        ]);
+    }
+
+    if (now()->diffInMinutes($resetEntry->created_at) > 30) {
+        DB::table('password_reset_tokens')
+            ->where('email', $validated['email'])
+            ->delete();
+
+        throw ValidationException::withMessages([
+            'token' => ['Dieser Zurücksetzen-Link ist abgelaufen.'],
+        ]);
+    }
+
+    if (!Hash::check($validated['token'], $resetEntry->token)) {
+        throw ValidationException::withMessages([
+            'token' => ['Dieser Zurücksetzen-Link ist ungültig.'],
+        ]);
+    }
+
+    $user = User::where('email', $validated['email'])->first();
+
+    if (!$user) {
+        throw ValidationException::withMessages([
+            'email' => ['Benutzer wurde nicht gefunden.'],
+        ]);
+    }
+
+    $user->password = Hash::make($validated['password']);
+    $user->save();
+
+    DB::table('password_reset_tokens')
+        ->where('email', $validated['email'])
+        ->delete();
+
+    return response()->json([
+        'message' => 'Passwort wurde erfolgreich zurückgesetzt.',
+    ]);
+});
+
 Route::post('/register', function (Request $request) use ($userPayload, $refreshInviteCodeIfExpired, $sendEmailVerificationCode) {
     $request->merge([
         'email' => strtolower($request->email),

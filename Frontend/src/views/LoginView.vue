@@ -30,7 +30,12 @@
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <label class="text-sm font-medium">Passwort</label>
-              <a href="#" class="text-sm text-purple hover:underline">Passwort vergessen?</a>
+              <RouterLink
+  to="/passwort-vergessen"
+  class="text-sm text-purple hover:underline"
+>
+  Passwort vergessen?
+</RouterLink>
             </div>
             <input v-model="password" type="password" placeholder="Dein Passwort" 
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring" />

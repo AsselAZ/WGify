@@ -19,13 +19,22 @@ const router = createRouter({
       component: () => import('@/views/LandingView.vue'),
     },
     {
-      path: '/login',
-      component: () => import('@/views/LoginView.vue'),
-    },
-    {
-      path: '/registrieren',
-      component: () => import('@/views/RegisterView.vue'),
-    },
+  path: '/login',
+  component: () => import('@/views/LoginView.vue'),
+  },
+  {
+    path: '/passwort-vergessen',
+    component: () => import('@/views/ForgotPasswordView.vue'),
+  },
+  {
+    path: '/passwort-zuruecksetzen',
+    component: () => import('@/views/ResetPasswordView.vue'),
+  },
+  {
+    path: '/registrieren',
+    component: () => import('@/views/RegisterView.vue'),
+  },
+    
     {
       path: '/wg-auswahl',
       component: () => import('@/views/ApartmentSetupView.vue'),
