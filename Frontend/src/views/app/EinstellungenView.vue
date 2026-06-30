@@ -1,19 +1,18 @@
 <template>
-  <div class="min-h-screen">
+  <div class="min-h-screen flex flex-col w-full">
     <AppNavbar
       title="Einstellungen"
       subtitle="Verwalte dein Profil und die WG"
       :show-search="false"
     />
 
-    <div class="p-4 md:p-6 space-y-6 max-w-3xl">
+    <div class="p-4 md:p-8 flex-1 w-full max-w-full mx-auto grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-8">
       <!-- Profil -->
-      <div class="rounded-xl border border-border bg-card p-6">
+      <div class="rounded-xl border border-border bg-card p-6 w-full">
         <div class="flex items-center gap-3 mb-6">
           <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
             <User class="h-5 w-5 text-primary" />
           </div>
-
           <div>
             <h2 class="text-lg font-semibold">Profil</h2>
             <p class="text-sm text-muted-foreground">
@@ -21,50 +20,45 @@
             </p>
           </div>
         </div>
-
         <div class="space-y-4">
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-4 flex-wrap">
             <div
-  class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary text-primary-foreground text-2xl font-semibold"
->
-  <img
-    v-if="avatarUrl"
-    :src="avatarUrl"
-    alt="Profilbild"
-    class="h-full w-full object-cover"
-  />
-
-  <span v-else>
-    {{ profile.avatar }}
-  </span>
-</div>
-
-<input
-  ref="avatarInput"
-  type="file"
-  accept="image/png,image/jpeg,image/jpg,image/webp"
-  class="hidden"
-  @change="handleAvatarChange"
-/>
-
-<button
-  type="button"
-  @click="openAvatarPicker"
-  class="px-4 py-2 rounded-md border border-border text-sm font-medium hover:bg-muted transition-colors"
->
-  Bild ändern
-</button>
-<button
-  v-if="avatarUrl"
-  type="button"
-  @click="deleteAvatar()"
-  class="px-4 py-2 rounded-md border border-border text-sm font-medium text-red-600 hover:bg-muted transition-colors"
->
-  Bild löschen
-</button>
+              class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary text-primary-foreground text-2xl font-semibold"
+            >
+              <img
+                v-if="avatarUrl"
+                :src="avatarUrl"
+                alt="Profilbild"
+                class="h-full w-full object-cover"
+              />
+              <span v-else>
+                {{ profile.avatar }}
+              </span>
+            </div>
+            <input
+              ref="avatarInput"
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/webp"
+              class="hidden"
+              @change="handleAvatarChange"
+            />
+            <button
+              type="button"
+              @click="openAvatarPicker"
+              class="px-4 py-2 rounded-md border border-border text-sm font-medium hover:bg-muted transition-colors"
+            >
+              Bild ändern
+            </button>
+            <button
+              v-if="avatarUrl"
+              type="button"
+              @click="deleteAvatar()"
+              class="px-4 py-2 rounded-md border border-border text-sm font-medium text-red-600 hover:bg-muted transition-colors"
+            >
+              Bild löschen
+            </button>
           </div>
-
-          <div class="grid gap-4 sm:grid-cols-2">
+          <div class="grid gap-4 md:grid-cols-2">
             <div class="space-y-2">
               <label class="text-sm font-medium">Name</label>
               <input
@@ -72,7 +66,6 @@
                 class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
-
             <div class="space-y-2">
               <label class="text-sm font-medium">E-Mail</label>
               <input
@@ -86,18 +79,16 @@
       </div>
 
       <!-- Passwort -->
-      <div class="rounded-xl border border-border bg-card p-6">
+      <div class="rounded-xl border border-border bg-card p-6 w-full">
         <div class="flex items-center gap-3 mb-6">
           <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple/15">
             <Lock class="h-5 w-5 text-purple" />
           </div>
-
           <div>
             <h2 class="text-lg font-semibold">Passwort</h2>
             <p class="text-sm text-muted-foreground">Passwort ändern</p>
           </div>
         </div>
-
         <div class="space-y-4">
           <div class="space-y-2">
             <label class="text-sm font-medium">Aktuelles Passwort</label>
@@ -110,8 +101,7 @@
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-
-          <div class="grid gap-4 sm:grid-cols-2">
+          <div class="grid gap-4 md:grid-cols-2">
             <div class="space-y-2">
               <label class="text-sm font-medium">Neues Passwort</label>
               <input
@@ -123,7 +113,6 @@
                 class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
-
             <div class="space-y-2">
               <label class="text-sm font-medium">Passwort bestätigen</label>
               <input
@@ -136,7 +125,6 @@
               />
             </div>
           </div>
-
           <button
             type="button"
             class="px-4 py-2 rounded-md border border-border text-sm font-medium hover:bg-muted transition-colors"
@@ -150,13 +138,12 @@
       <!-- WG-Einstellungen -->
       <div
         v-if="hasApartment"
-        class="rounded-xl border border-border bg-card p-6"
+        class="rounded-xl border border-border bg-card p-6 w-full"
       >
         <div class="flex items-center gap-3 mb-6">
           <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/50">
             <Home class="h-5 w-5 text-primary" />
           </div>
-
           <div>
             <h2 class="text-lg font-semibold">WG-Einstellungen</h2>
             <p class="text-sm text-muted-foreground">
@@ -164,7 +151,6 @@
             </p>
           </div>
         </div>
-
         <div class="space-y-4">
           <div class="space-y-2">
             <label class="text-sm font-medium">WG-Name</label>
@@ -174,7 +160,6 @@
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-
           <div class="space-y-2">
             <label class="text-sm font-medium">Adresse</label>
             <input
@@ -183,9 +168,6 @@
               class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
             />
           </div>
-
-          
-
           <p
             v-if="!isAdmin"
             class="text-xs text-muted-foreground"
@@ -196,12 +178,11 @@
       </div>
 
       <!-- Benachrichtigungen -->
-      <div class="rounded-xl border border-border bg-card p-6">
+      <div class="rounded-xl border border-border bg-card p-6 w-full">
         <div class="flex items-center gap-3 mb-6">
           <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/20">
             <Bell class="h-5 w-5 text-warning-foreground" />
           </div>
-
           <div>
             <h2 class="text-lg font-semibold">Benachrichtigungen</h2>
             <p class="text-sm text-muted-foreground">
@@ -209,7 +190,6 @@
             </p>
           </div>
         </div>
-
         <div class="space-y-4 divide-y divide-border">
           <div
             v-for="item in notifItems"
@@ -220,7 +200,6 @@
               <p class="font-medium">{{ item.label }}</p>
               <p class="text-sm text-muted-foreground">{{ item.desc }}</p>
             </div>
-
             <button
               type="button"
               :class="[
@@ -240,51 +219,52 @@
         </div>
       </div>
 
-      <!-- Save -->
-      <div class="flex justify-end">
-        <div class="space-y-2 text-right">
+      <!-- Achtung / Save (bei großem Screen rechts, sonst unten) -->
+      <div class="flex flex-col gap-6 w-full">
+        <!-- Save -->
+        <div class="flex justify-end">
+          <div class="space-y-2 text-right">
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              @click="saveSettings"
+            >
+              <Save class="h-4 w-4" />
+              Änderungen speichern
+            </button>
+          </div>
+        </div>
+
+        <!-- Achtung -->
+        <div
+          v-if="hasApartment"
+          class="rounded-xl border border-red-200 bg-red-50 p-6 w-full"
+        >
+          <h2 class="text-lg font-semibold text-red-700">
+            Achtung!
+          </h2>
+          <p class="mt-1 text-sm text-red-600">
+            Du kannst die WG verlassen. Wenn du Admin bist, dann wird automatisch ein anderes Mitglied Admin.
+          </p>
           <button
             type="button"
-            class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-            @click="saveSettings"
+            class="mt-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+            @click="showLeaveDialog = true"
           >
-            <Save class="h-4 w-4" />
-            Änderungen speichern
+            WG verlassen
           </button>
         </div>
       </div>
-
-      <!-- Achtung -->
-      <div
-        v-if="hasApartment"
-        class="rounded-xl border border-red-200 bg-red-50 p-6"
-      >
-        <h2 class="text-lg font-semibold text-red-700">
-          Achtung!
-        </h2>
-
-        <p class="mt-1 text-sm text-red-600">
-          Du kannst die WG verlassen. Wenn du Admin bist, dann wird automatisch ein anderes Mitglied Admin.
-        </p>
-
-        <button
-          type="button"
-          class="mt-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
-          @click="showLeaveDialog = true"
-        >
-          WG verlassen
-        </button>
-      </div>
     </div>
+    <AppConfirmDialog
+      v-model="showLeaveDialog"
+      title="WG verlassen?"
+      message="Möchtest du diese WG wirklich verlassen? Wenn du Admin bist, wird automatisch ein anderes Mitglied Admin."
+      confirm-text="WG verlassen"
+      cancel-text="Abbrechen"
+      @confirm="leaveApartment"
+    />
   </div>
-  <AppConfirmDialog
-    v-model="showLeaveDialog"
-    title="WG verlassen?"
-    message="Möchtest du diese WG wirklich verlassen? Wenn du Admin bist, wird automatisch ein anderes Mitglied Admin."
-    confirm-text="WG verlassen"
-    cancel-text="Abbrechen"
-    @confirm="leaveApartment"
-  />
 </template>
 
 <script setup>
@@ -386,16 +366,6 @@ onMounted(async () => {
   loadProfileData()
   loadApartmentData()
 
-  // const savedSettings = localStorage.getItem('settings')
-
-  // if (savedSettings) {
-  //   const settings = JSON.parse(savedSettings)
-
-  //   if (settings.notifs) {
-  //     Object.assign(notifs, settings.notifs)
-  //   }
-  // }
-
   const user = authStore.currentUser
 
   if (user) {
@@ -418,7 +388,6 @@ async function leaveApartment() {
           member.email,
           'member-left',
           `${leavingUserName} hat die WG verlassen.`
-          
         )
       })
 
