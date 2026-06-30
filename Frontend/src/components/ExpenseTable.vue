@@ -1,10 +1,11 @@
 <template>
   <div class="space-y-4">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <h2 class="text-lg font-semibold">Alle Ausgaben</h2>
 
       <button
-        class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+        type="button"
+        class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:w-auto"
         @click="openCreateDialog"
       >
         <Plus class="h-4 w-4" />
@@ -12,16 +13,92 @@
       </button>
     </div>
 
-    <div class="rounded-xl border border-border overflow-hidden">
-      <table class="w-full text-sm">
+    <!-- Mobile Ansicht -->
+    <div class="space-y-3 md:hidden">
+      <div
+        v-for="expense in expenses"
+        :key="expense.id"
+        class="rounded-xl border border-border bg-card p-4 shadow-sm"
+      >
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <h3 class="truncate font-semibold">
+              {{ expense.title }}
+            </h3>
+
+            <p class="mt-1 text-sm text-muted-foreground">
+              {{ formatDate(expense.date) }} · bezahlt von {{ expense.paidBy }}
+            </p>
+          </div>
+
+          <p class="shrink-0 text-right font-semibold">
+            {{ Number(expense.amount).toFixed(2) }} EUR
+          </p>
+        </div>
+
+        <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <span
+            :class="[
+              'inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
+              getCategoryColor(expense.category),
+            ]"
+          >
+            {{ expense.category }}
+          </span>
+
+          <div class="flex flex-wrap gap-2">
+            <button
+              type="button"
+              class="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs transition-colors hover:bg-muted"
+              @click="openEditDialog(expense)"
+            >
+              <Pencil class="h-3.5 w-3.5" />
+              Bearbeiten
+            </button>
+
+            <button
+              type="button"
+              class="inline-flex items-center gap-1 rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 transition-colors hover:bg-red-50"
+              @click="deleteExpense(expense)"
+            >
+              <Trash2 class="h-3.5 w-3.5" />
+              Löschen
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-if="expenses.length === 0"
+        class="rounded-xl border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground"
+      >
+        Noch keine Ausgaben vorhanden.
+      </div>
+    </div>
+
+    <!-- Desktop Ansicht -->
+    <div class="hidden rounded-xl border border-border overflow-x-auto md:block">
+      <table class="w-full min-w-[760px] text-sm">
         <thead>
           <tr class="bg-secondary/40">
-            <th class="text-left px-4 py-3 font-medium text-muted-foreground">Titel</th>
-            <th class="text-left px-4 py-3 font-medium text-muted-foreground">Kategorie</th>
-            <th class="text-left px-4 py-3 font-medium text-muted-foreground">Bezahlt von</th>
-            <th class="text-left px-4 py-3 font-medium text-muted-foreground">Datum</th>
-            <th class="text-right px-4 py-3 font-medium text-muted-foreground">Betrag</th>
-            <th class="text-right px-4 py-3 font-medium text-muted-foreground">Aktionen</th>
+            <th class="px-4 py-3 text-left font-medium text-muted-foreground">
+              Titel
+            </th>
+            <th class="px-4 py-3 text-left font-medium text-muted-foreground">
+              Kategorie
+            </th>
+            <th class="px-4 py-3 text-left font-medium text-muted-foreground">
+              Bezahlt von
+            </th>
+            <th class="px-4 py-3 text-left font-medium text-muted-foreground">
+              Datum
+            </th>
+            <th class="px-4 py-3 text-right font-medium text-muted-foreground">
+              Betrag
+            </th>
+            <th class="px-4 py-3 text-right font-medium text-muted-foreground">
+              Aktionen
+            </th>
           </tr>
         </thead>
 
@@ -29,7 +106,7 @@
           <tr
             v-for="expense in expenses"
             :key="expense.id"
-            class="border-t border-border hover:bg-muted/30 transition-colors"
+            class="border-t border-border transition-colors hover:bg-muted/30"
           >
             <td class="px-4 py-3 font-medium">
               {{ expense.title }}
@@ -39,7 +116,7 @@
               <span
                 :class="[
                   'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-                  getCategoryColor(expense.category)
+                  getCategoryColor(expense.category),
                 ]"
               >
                 {{ expense.category }}
@@ -62,7 +139,7 @@
               <div class="flex justify-end gap-2">
                 <button
                   type="button"
-                  class="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs hover:bg-muted transition-colors"
+                  class="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs transition-colors hover:bg-muted"
                   @click="openEditDialog(expense)"
                 >
                   <Pencil class="h-3.5 w-3.5" />
@@ -71,7 +148,7 @@
 
                 <button
                   type="button"
-                  class="inline-flex items-center gap-1 rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 transition-colors"
+                  class="inline-flex items-center gap-1 rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 transition-colors hover:bg-red-50"
                   @click="deleteExpense(expense)"
                 >
                   <Trash2 class="h-3.5 w-3.5" />
@@ -82,7 +159,10 @@
           </tr>
 
           <tr v-if="expenses.length === 0">
-            <td colspan="6" class="px-4 py-8 text-center text-muted-foreground">
+            <td
+              colspan="6"
+              class="px-4 py-8 text-center text-muted-foreground"
+            >
               Noch keine Ausgaben vorhanden.
             </td>
           </tr>
@@ -90,25 +170,30 @@
       </table>
     </div>
 
+    <!-- Formular Dialog -->
     <div
       v-if="showDialog"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      class="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 sm:items-center sm:p-4"
       @click.self="closeDialog"
     >
-      <div class="bg-card rounded-xl border border-border p-6 w-full max-w-md mx-4 shadow-xl">
-        <h3 class="text-lg font-semibold mb-4">
+      <div
+        class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-border bg-card p-4 shadow-xl sm:rounded-xl sm:p-6"
+      >
+        <h3 class="mb-4 text-lg font-semibold">
           {{ editingExpenseId ? 'Ausgabe bearbeiten' : 'Neue Ausgabe hinzufügen' }}
         </h3>
-        
 
-        <form class="space-y-4" @submit.prevent="handleSubmit" novalidate>
+        <form
+          class="space-y-4"
+          novalidate
+          @submit.prevent="handleSubmit"
+        >
           <div class="space-y-2">
             <label class="text-sm font-medium">Titel</label>
             <input
               v-model="form.title"
-              class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
+              class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
               placeholder="z.B. Internet"
-              
             />
           </div>
 
@@ -119,9 +204,8 @@
               type="number"
               step="0.01"
               min="0"
-              class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
+              class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
               placeholder="0.00"
-              
             />
           </div>
 
@@ -129,11 +213,14 @@
             <label class="text-sm font-medium">Kategorie</label>
             <select
               v-model="form.category"
-              class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
-              
+              class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Kategorie wählen</option>
-              <option v-for="cat in categories" :key="cat" :value="cat">
+              <option
+                v-for="cat in categories"
+                :key="cat"
+                :value="cat"
+              >
                 {{ cat }}
               </option>
             </select>
@@ -143,8 +230,7 @@
             <label class="text-sm font-medium">Bezahlt von</label>
             <select
               v-model="form.paidBy"
-              class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
-              
+              class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Person wählen</option>
               <option
@@ -162,17 +248,21 @@
             <input
               v-model="form.date"
               type="date"
-              class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
-              
+              class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
- <p v-if="formError" class="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
-  {{ formError }}
-</p>
-          <div class="flex gap-3 pt-2">
+
+          <p
+            v-if="formError"
+            class="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600"
+          >
+            {{ formError }}
+          </p>
+
+          <div class="flex flex-col gap-3 pt-2 sm:flex-row">
             <button
               type="button"
-              class="flex-1 px-4 py-2 rounded-md border border-border text-sm font-medium hover:bg-muted transition-colors"
+              class="h-10 flex-1 rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-muted"
               @click="closeDialog"
             >
               Abbrechen
@@ -180,7 +270,7 @@
 
             <button
               type="submit"
-              class="flex-1 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              class="h-10 flex-1 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
               {{ editingExpenseId ? 'Speichern' : 'Hinzufügen' }}
             </button>
@@ -188,16 +278,16 @@
         </form>
       </div>
     </div>
-  </div>
-  <AppConfirmDialog
-    v-model="showDeleteDialog"
-    title="Ausgabe löschen?"
-    :message="`Möchtest du die Ausgabe '${selectedExpense?.title || ''}' wirklich löschen?`"
-    confirm-text="Löschen"
-    cancel-text="Abbrechen"
-    @confirm="confirmDeleteExpense"
-  />
 
+    <AppConfirmDialog
+      v-model="showDeleteDialog"
+      title="Ausgabe löschen?"
+      :message="`Möchtest du die Ausgabe '${selectedExpense?.title || ''}' wirklich löschen?`"
+      confirm-text="Löschen"
+      cancel-text="Abbrechen"
+      @confirm="confirmDeleteExpense"
+    />
+  </div>
 </template>
 
 <script setup>
@@ -219,8 +309,6 @@ defineProps({
     default: () => [],
   },
 })
-
-
 
 const emit = defineEmits([
   'addExpense',
@@ -253,6 +341,7 @@ const form = ref({
 
 function openCreateDialog() {
   editingExpenseId.value = null
+  formError.value = ''
 
   form.value = {
     title: '',
@@ -267,6 +356,7 @@ function openCreateDialog() {
 
 function openEditDialog(expense) {
   editingExpenseId.value = expense.id
+  formError.value = ''
 
   form.value = {
     title: expense.title,
@@ -282,6 +372,7 @@ function openEditDialog(expense) {
 function closeDialog() {
   showDialog.value = false
   editingExpenseId.value = null
+  formError.value = ''
 }
 
 function handleSubmit() {
@@ -313,7 +404,7 @@ function handleSubmit() {
   }
 
   const payload = {
-    title: form.value.title,
+    title: form.value.title.trim(),
     amount: parseFloat(form.value.amount),
     category: form.value.category,
     paidBy: form.value.paidBy,
@@ -344,7 +435,7 @@ function confirmDeleteExpense() {
 }
 
 function getCategoryColor(category) {
-  switch (category.toLowerCase()) {
+  switch (String(category || '').toLowerCase()) {
     case 'miete':
       return 'bg-primary/10 text-primary'
     case 'strom':

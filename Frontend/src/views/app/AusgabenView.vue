@@ -6,18 +6,18 @@
       v-model:search="searchQuery"
     />
 
-    <div class="p-4 md:p-6 space-y-6">
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="space-y-6 p-4 sm:p-6">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         <DashboardCard
           title="Gesamtausgaben"
-          :value="`${totalExpenses.toFixed(2)} €`"
+          :value="`${totalExpenses.toFixed(2)} EUR`"
           subtitle="Alle Ausgaben"
           :icon="Receipt"
         />
 
         <DashboardCard
           title="Pro Person"
-          :value="`${avgPerPerson.toFixed(2)} €`"
+          :value="`${avgPerPerson.toFixed(2)} EUR`"
           subtitle="Durchschnitt"
           :icon="TrendingUp"
         />
@@ -37,7 +37,7 @@
         />
       </div>
 
-      <div class="rounded-xl border border-border bg-card p-6">
+      <div class="rounded-xl border border-border bg-card p-4 sm:p-6">
         <ExpenseTable
           :expenses="filteredExpenses"
           :members="membersStore.members"

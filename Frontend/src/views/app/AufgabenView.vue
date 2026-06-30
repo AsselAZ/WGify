@@ -7,8 +7,8 @@
       @update:search="searchQuery = $event"
     />
 
-    <div class="p-4 md:p-6 space-y-6">
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="space-y-6 p-4 sm:p-6">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         <DashboardCard
           title="Aufgaben"
           :value="filteredTasks.length"
@@ -38,7 +38,7 @@
         />
       </div>
 
-      <div class="rounded-xl border border-border bg-card p-6">
+      <div class="rounded-xl border border-border bg-card p-4 sm:p-6">
         <p v-if="store.isLoading" class="text-sm text-muted-foreground">
           Aufgaben werden geladen...
         </p>

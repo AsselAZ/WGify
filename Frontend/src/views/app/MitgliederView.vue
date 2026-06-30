@@ -1,13 +1,13 @@
 <template>
-  <div class="min-h-screen">
+  <div class="flex min-h-screen w-full flex-col">
     <AppNavbar
       title="Mitglieder"
       subtitle="Verwalte deine WG-Mitglieder"
       :show-search="false"
     />
 
-    <div class="p-4 md:p-6 space-y-6">
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="space-y-6 p-4 sm:p-6">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         <DashboardCard
           title="Mitglieder"
           :value="members.length"
@@ -23,7 +23,7 @@
         />
 
         <DashboardCard
-          title="Mitglieder"
+          title="Regulär"
           :value="regularCount"
           subtitle="Reguläre Mitglieder"
           :icon="UserCheck"
@@ -37,19 +37,25 @@
         />
       </div>
 
-      <div class="rounded-xl border border-border bg-card p-6">
-        <p v-if="membersStore.isLoading" class="text-sm text-muted-foreground">
+      <div class="rounded-xl border border-border bg-card p-4 sm:p-6">
+        <p
+          v-if="membersStore.isLoading"
+          class="text-sm text-muted-foreground"
+        >
           Mitglieder werden geladen...
         </p>
 
-        <p v-else-if="membersStore.error" class="text-sm text-red-500">
+        <p
+          v-else-if="membersStore.error"
+          class="text-sm text-red-500"
+        >
           {{ membersStore.error }}
         </p>
 
         <MemberList
+          v-else
           :members="members"
           @remove-member="membersStore.removeMember"
-          v-else
         />
       </div>
     </div>
@@ -80,11 +86,10 @@ onMounted(() => {
 const members = computed(() => membersStore.members)
 
 const adminCount = computed(() => {
-  return members.value.filter(member => member.role === 'admin').length
+  return members.value.filter((member) => member.role === 'admin').length
 })
 
 const regularCount = computed(() => {
-  return members.value.filter(member => member.role !== 'admin').length
+  return members.value.filter((member) => member.role !== 'admin').length
 })
-
 </script>

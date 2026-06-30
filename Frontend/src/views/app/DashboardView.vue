@@ -6,9 +6,9 @@
       v-model:search="searchQuery"
     />
 
-    <div class="p-4 md:p-6 space-y-6">
+    <div class="space-y-6 p-4 sm:p-6">
       <!-- Stats -->
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         <DashboardCard
           title="Gesamtausgaben"
           :value="`${total().toFixed(2)} EUR`"
@@ -49,31 +49,38 @@
       </div>
 
       <!-- Recent Activity -->
-      <div class="grid gap-6 lg:grid-cols-2">
-        <div class="rounded-xl border border-border bg-card p-6">
-          <h3 class="mb-4 text-lg font-semibold">Letzte Ausgaben</h3>
+      <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div class="rounded-xl border border-border bg-card p-4 sm:p-6">
+          <h3 class="mb-4 text-lg font-semibold">
+            Letzte Ausgaben
+          </h3>
 
           <div class="space-y-3">
             <div
               v-for="(expense, index) in filteredExpenses.slice(0, 5)"
               :key="expense.id"
               :class="[
-                'flex items-center justify-between rounded-lg px-4 py-3',
+                'flex flex-col gap-2 rounded-lg px-4 py-3 sm:flex-row sm:items-center sm:justify-between',
                 index % 3 === 0
                   ? 'bg-secondary/50'
                   : index % 3 === 1
                     ? 'bg-accent/30'
-                    : 'bg-purple/10'
+                    : 'bg-purple/10',
               ]"
             >
-              <div>
-                <p class="font-medium">{{ expense.title }}</p>
+              <div class="min-w-0">
+                <p class="truncate font-medium">
+                  {{ expense.title }}
+                </p>
+
                 <p class="text-sm text-muted-foreground">
                   {{ expense.paidBy }} - {{ formatDate(expense.date) }}
                 </p>
               </div>
 
-              <p class="font-semibold">{{ expense.amount.toFixed(2) }} EUR</p>
+              <p class="shrink-0 whitespace-nowrap font-semibold sm:text-right">
+                {{ expense.amount.toFixed(2) }} EUR
+              </p>
             </div>
 
             <p
@@ -85,26 +92,31 @@
           </div>
         </div>
 
-        <div class="rounded-xl border border-border bg-card p-6">
-          <h3 class="mb-4 text-lg font-semibold">Offene Aufgaben</h3>
+        <div class="rounded-xl border border-border bg-card p-4 sm:p-6">
+          <h3 class="mb-4 text-lg font-semibold">
+            Offene Aufgaben
+          </h3>
 
           <div class="space-y-3">
             <div
               v-for="(task, index) in openTasks.slice(0, 5)"
               :key="task.id"
               :class="[
-                'flex items-center justify-between rounded-lg px-4 py-3',
-                index % 2 === 0 ? 'bg-accent/30' : 'bg-secondary/50'
+                'flex flex-col gap-2 rounded-lg px-4 py-3 sm:flex-row sm:items-center sm:justify-between',
+                index % 2 === 0 ? 'bg-accent/30' : 'bg-secondary/50',
               ]"
             >
-              <div>
-                <p class="font-medium">{{ task.title }}</p>
+              <div class="min-w-0">
+                <p class="truncate font-medium">
+                  {{ task.title }}
+                </p>
+
                 <p class="text-sm text-muted-foreground">
                   {{ task.assignedTo }} - Fällig: {{ formatDate(task.dueDate) }}
                 </p>
               </div>
 
-              <span class="inline-flex items-center rounded-full bg-warning/20 px-2.5 py-0.5 text-xs font-medium text-warning-foreground">
+              <span class="inline-flex w-fit shrink-0 items-center rounded-full bg-warning/20 px-2.5 py-0.5 text-xs font-medium text-warning-foreground">
                 Offen
               </span>
             </div>

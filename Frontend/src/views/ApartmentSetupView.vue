@@ -1,20 +1,22 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-background p-4">
-    <div class="w-full max-w-xl rounded-xl border border-border bg-card p-6 shadow-sm">
+  <div class="flex min-h-screen items-center justify-center bg-background p-4">
+    <div class="w-full max-w-xl rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
       <div class="text-center">
-        <h1 class="text-2xl font-bold">WG auswählen</h1>
+        <h1 class="text-2xl font-bold">
+          WG auswählen
+        </h1>
 
         <p class="mt-2 text-sm text-muted-foreground">
           Du bist aktuell in keiner WG. Erstelle eine neue WG oder tritt einer bestehenden WG bei.
         </p>
       </div>
 
-      <div class="mt-6 grid grid-cols-2 gap-2">
+      <div class="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
         <button
           type="button"
           class="rounded-md border px-4 py-2 text-sm font-medium transition-colors"
           :class="mode === 'create'
-            ? 'bg-primary text-primary-foreground border-primary'
+            ? 'border-primary bg-primary text-primary-foreground'
             : 'border-border hover:bg-muted'"
           @click="mode = 'create'"
         >
@@ -25,7 +27,7 @@
           type="button"
           class="rounded-md border px-4 py-2 text-sm font-medium transition-colors"
           :class="mode === 'join'
-            ? 'bg-primary text-primary-foreground border-primary'
+            ? 'border-primary bg-primary text-primary-foreground'
             : 'border-border hover:bg-muted'"
           @click="mode = 'join'"
         >
@@ -33,38 +35,46 @@
         </button>
       </div>
 
-      <form class="mt-6 space-y-4" @submit.prevent="submit">
-        <div v-if="mode === 'create'" class="space-y-2">
+      <form
+        class="mt-6 space-y-4"
+        @submit.prevent="submit"
+      >
+        <div
+          v-if="mode === 'create'"
+          class="space-y-2"
+        >
           <label class="text-sm font-medium">WG-Name</label>
 
           <input
             v-model="apartmentName"
             placeholder="z.B. Haus am See"
-            class="w-full rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
-        <div v-else class="space-y-2">
+        <div
+          v-else
+          class="space-y-2"
+        >
           <label class="text-sm font-medium">Einladungscode</label>
 
           <input
             v-model="inviteCode"
             placeholder="z.B. ABC123"
-            class="w-full rounded-md border border-border bg-input px-3 py-2 text-sm uppercase outline-none focus:ring-2 focus:ring-ring"
+            class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm uppercase outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
-
         <button
           type="submit"
-          class="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          class="h-10 w-full rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           {{ mode === 'create' ? 'WG erstellen' : 'WG beitreten' }}
         </button>
 
         <button
           type="button"
-          class="w-full rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+          class="h-10 w-full rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-muted"
           @click="logout"
         >
           Abmelden
@@ -86,10 +96,11 @@ const router = useRouter()
 const authStore = useAuthStore()
 const membersStore = useMembersStore()
 const notifications = useNotificationsStore()
+const toast = useToastStore()
+
 const mode = ref('join')
 const apartmentName = ref('')
 const inviteCode = ref('')
-const toast = useToastStore()
 
 const appHome = '/app/dashboard'
 
@@ -117,11 +128,7 @@ async function submit() {
       )
     } else {
       await authStore.joinApartment(inviteCode.value)
-
       await membersStore.loadMembers()
-
-      console.log('Mitglieder nach WG-Beitritt:', membersStore.members)
-      console.log('Aktueller User nach WG-Beitritt:', authStore.currentUser)
 
       const joinedUserName = authStore.currentUser?.name || 'Ein neues Mitglied'
       const joinedUserEmail = authStore.currentUser?.email
@@ -132,8 +139,8 @@ async function submit() {
           notifications.addNotificationForUser(
             member.email,
             'member-joined',
+            'Neues Mitglied',
             `${joinedUserName} ist der WG beigetreten.`
-            
           )
         })
 

@@ -2,7 +2,8 @@
   <div class="relative">
     <button
       type="button"
-      class="relative rounded-md p-2 hover:bg-muted transition-colors"
+      class="relative flex h-10 w-10 items-center justify-center rounded-md transition-colors hover:bg-muted"
+      aria-label="Benachrichtigungen öffnen"
       @click="isOpen = !isOpen"
     >
       <Bell class="h-5 w-5" />
@@ -17,11 +18,14 @@
 
     <div
       v-if="isOpen"
-      class="absolute right-0 top-11 z-50 w-80 rounded-xl border border-border bg-card shadow-xl"
+      class="fixed inset-x-3 top-16 z-50 max-h-[calc(100vh-5rem)] overflow-hidden rounded-xl border border-border bg-card shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:w-80"
     >
-      <div class="flex items-center justify-between border-b border-border p-4">
-        <div>
-          <h3 class="font-semibold">Benachrichtigungen</h3>
+      <div class="flex items-start justify-between gap-3 border-b border-border p-4">
+        <div class="min-w-0">
+          <h3 class="font-semibold">
+            Benachrichtigungen
+          </h3>
+
           <p class="text-xs text-muted-foreground">
             {{ notificationsStore.unreadCount }} ungelesen
           </p>
@@ -29,14 +33,14 @@
 
         <button
           type="button"
-          class="text-xs text-primary hover:underline"
+          class="shrink-0 text-xs text-primary hover:underline"
           @click="notificationsStore.markAllAsRead()"
         >
           Alle gelesen
         </button>
       </div>
 
-      <div class="max-h-96 overflow-y-auto">
+      <div class="max-h-[calc(100vh-12rem)] overflow-y-auto sm:max-h-96">
         <div
           v-if="notificationsStore.notifications.length === 0"
           class="p-4 text-sm text-muted-foreground"
@@ -93,6 +97,7 @@ onMounted(() => {
   notificationsStore.loadNotifications()
   loadOverdueTaskNotifications()
 })
+
 async function loadOverdueTaskNotifications() {
   try {
     const response = await api.get('/tasks/overdue')
@@ -115,6 +120,7 @@ function formatDate(date) {
     timeStyle: 'short',
   })
 }
+
 function formatDateOnly(date) {
   return new Date(date).toLocaleDateString('de-DE')
 }

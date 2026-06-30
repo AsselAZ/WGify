@@ -1,8 +1,11 @@
 <template>
-  <div class="min-h-screen bg-background">
+  <div class="min-h-screen overflow-x-hidden bg-background">
     <AppSidebar />
-    <main class="md:pl-64">
-      <RouterView />
+
+    <main class="min-h-screen lg:pl-64">
+      <div class="mx-auto w-full max-w-[1400px] px-4 pb-6 pt-20 sm:px-6 sm:pt-8 lg:px-8 lg:pt-8">
+        <RouterView />
+      </div>
     </main>
   </div>
 </template>

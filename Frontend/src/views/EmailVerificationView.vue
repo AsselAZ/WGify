@@ -1,3 +1,63 @@
+<template>
+  <div class="flex min-h-screen items-center justify-center bg-background p-4">
+    <div class="w-full max-w-md rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+      <div class="text-center">
+        <h1 class="text-2xl font-bold">
+          E-Mail bestätigen
+        </h1>
+
+        <p class="mt-2 text-sm text-muted-foreground">
+          Wir haben dir einen 6-stelligen Code gesendet. Der Code ist 5 Minuten gültig.
+        </p>
+      </div>
+
+      <div class="mt-6 space-y-4">
+        <div class="space-y-2">
+          <label class="text-sm font-medium">E-Mail-Adresse</label>
+
+          <input
+            v-model="email"
+            type="email"
+            class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            placeholder="deine@email.de"
+          />
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-medium">Bestätigungscode</label>
+
+          <input
+            v-model="code"
+            type="text"
+            maxlength="6"
+            inputmode="numeric"
+            class="h-10 w-full rounded-md border border-border bg-input px-3 text-center text-sm tracking-[0.35em] outline-none focus:ring-2 focus:ring-ring"
+            placeholder="123456"
+          />
+        </div>
+
+        <button
+          type="button"
+          class="h-10 w-full rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+          :disabled="isLoading"
+          @click="verifyEmail"
+        >
+          {{ isLoading ? 'Wird geprüft...' : 'E-Mail bestätigen' }}
+        </button>
+
+        <button
+          type="button"
+          class="h-10 w-full rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
+          :disabled="isResending"
+          @click="resendCode"
+        >
+          {{ isResending ? 'Wird gesendet...' : 'Code erneut senden' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script setup>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -74,57 +134,3 @@ async function resendCode() {
   }
 }
 </script>
-
-<template>
-  <div class="min-h-screen flex items-center justify-center bg-background px-4">
-    <div class="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm">
-      <h1 class="text-2xl font-bold mb-2">E-Mail bestätigen</h1>
-
-      <p class="text-sm text-muted-foreground mb-6">
-        Wir haben dir einen 6-stelligen Code gesendet. Der Code ist 5 Minuten gültig.
-      </p>
-
-      <div class="space-y-4">
-        <div class="space-y-2">
-          <label class="text-sm font-medium">E-Mail-Adresse</label>
-          <input
-            v-model="email"
-            type="email"
-            class="w-full px-3 h-10 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
-            placeholder="deine@email.de"
-          />
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium">Bestätigungscode</label>
-          <input
-            v-model="code"
-            type="text"
-            maxlength="6"
-            inputmode="numeric"
-            class="w-full px-3 h-10 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
-            placeholder="123456"
-          />
-        </div>
-
-        <button
-          type="button"
-          class="w-full h-10 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-50"
-          :disabled="isLoading"
-          @click="verifyEmail"
-        >
-          {{ isLoading ? 'Wird geprüft...' : 'E-Mail bestätigen' }}
-        </button>
-
-        <button
-          type="button"
-          class="w-full h-10 rounded-md border border-border text-sm font-medium hover:bg-muted disabled:opacity-50"
-          :disabled="isResending"
-          @click="resendCode"
-        >
-          {{ isResending ? 'Wird gesendet...' : 'Code erneut senden' }}
-        </button>
-      </div>
-    </div>
-  </div>
-</template>

@@ -1,29 +1,32 @@
 <template>
-  <div class="min-h-screen flex flex-col w-full">
+  <div class="flex min-h-screen w-full flex-col">
     <AppNavbar
       title="Einstellungen"
       subtitle="Verwalte dein Profil und die WG"
       :show-search="false"
     />
 
-    <div class="p-4 md:p-8 flex-1 w-full max-w-full mx-auto grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-8">
+    <div class="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-4 p-4 sm:gap-6 sm:p-6 xl:grid-cols-2 xl:p-8">
       <!-- Profil -->
-      <div class="rounded-xl border border-border bg-card p-6 w-full">
-        <div class="flex items-center gap-3 mb-6">
-          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+      <div class="w-full rounded-xl border border-border bg-card p-4 sm:p-6">
+        <div class="mb-6 flex items-start gap-3">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
             <User class="h-5 w-5 text-primary" />
           </div>
-          <div>
+
+          <div class="min-w-0">
             <h2 class="text-lg font-semibold">Profil</h2>
             <p class="text-sm text-muted-foreground">
               Persönliche Informationen bearbeiten
             </p>
           </div>
         </div>
+
         <div class="space-y-4">
-          <div class="flex items-center gap-4 flex-wrap">
+
+          <div class="flex items-center gap-4">
             <div
-              class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary text-primary-foreground text-2xl font-semibold"
+              class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-2xl font-semibold text-primary-foreground"
             >
               <img
                 v-if="avatarUrl"
@@ -31,10 +34,30 @@
                 alt="Profilbild"
                 class="h-full w-full object-cover"
               />
+
               <span v-else>
                 {{ profile.avatar }}
               </span>
             </div>
+          </div>
+
+ <!--         
+              <div class="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+            <div
+              class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-2xl font-semibold text-primary-foreground"
+            >
+              <img
+                v-if="avatarUrl"
+                :src="avatarUrl"
+                alt="Profilbild"
+                class="h-full w-full object-cover"
+              />
+
+              <span v-else>
+                {{ profile.avatar }}
+              </span>
+            </div>
+
             <input
               ref="avatarInput"
               type="file"
@@ -42,36 +65,42 @@
               class="hidden"
               @change="handleAvatarChange"
             />
-            <button
-              type="button"
-              @click="openAvatarPicker"
-              class="px-4 py-2 rounded-md border border-border text-sm font-medium hover:bg-muted transition-colors"
-            >
-              Bild ändern
-            </button>
-            <button
-              v-if="avatarUrl"
-              type="button"
-              @click="deleteAvatar()"
-              class="px-4 py-2 rounded-md border border-border text-sm font-medium text-red-600 hover:bg-muted transition-colors"
-            >
-              Bild löschen
-            </button>
+
+            <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+              <button
+                type="button"
+                class="w-full rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted sm:w-auto"
+                @click="openAvatarPicker"
+              >
+                Bild ändern
+              </button>
+
+              <button
+                v-if="avatarUrl"
+                type="button"
+                class="w-full rounded-md border border-border px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-muted sm:w-auto"
+                @click="deleteAvatar"
+              >
+                Bild löschen
+              </button>
+            </div>
           </div>
-          <div class="grid gap-4 md:grid-cols-2">
+-->
+          <div class="grid grid-cols-1 gap-4 2xl:grid-cols-2">
             <div class="space-y-2">
               <label class="text-sm font-medium">Name</label>
               <input
                 v-model="profile.name"
-                class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
+                class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
+
             <div class="space-y-2">
               <label class="text-sm font-medium">E-Mail</label>
               <input
                 v-model="profile.email"
                 type="email"
-                class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
+                class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
@@ -79,16 +108,20 @@
       </div>
 
       <!-- Passwort -->
-      <div class="rounded-xl border border-border bg-card p-6 w-full">
-        <div class="flex items-center gap-3 mb-6">
-          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple/15">
+      <div class="w-full rounded-xl border border-border bg-card p-4 sm:p-6">
+        <div class="mb-6 flex items-start gap-3">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple/15">
             <Lock class="h-5 w-5 text-purple" />
           </div>
-          <div>
+
+          <div class="min-w-0">
             <h2 class="text-lg font-semibold">Passwort</h2>
-            <p class="text-sm text-muted-foreground">Passwort ändern</p>
+            <p class="text-sm text-muted-foreground">
+              Passwort ändern
+            </p>
           </div>
         </div>
+
         <div class="space-y-4">
           <div class="space-y-2">
             <label class="text-sm font-medium">Aktuelles Passwort</label>
@@ -98,10 +131,11 @@
               name="wgify-current-password"
               autocomplete="new-password"
               placeholder="Aktuelles Passwort eingeben"
-              class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
+              class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-          <div class="grid gap-4 md:grid-cols-2">
+
+          <div class="grid grid-cols-1 gap-4 2xl:grid-cols-2">
             <div class="space-y-2">
               <label class="text-sm font-medium">Neues Passwort</label>
               <input
@@ -110,9 +144,10 @@
                 name="wgify-new-password"
                 autocomplete="new-password"
                 placeholder="Neues Passwort eingeben"
-                class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
+                class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
+
             <div class="space-y-2">
               <label class="text-sm font-medium">Passwort bestätigen</label>
               <input
@@ -121,13 +156,14 @@
                 name="wgify-confirm-password"
                 autocomplete="new-password"
                 placeholder="Neues Passwort wiederholen"
-                class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
+                class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
+
           <button
             type="button"
-            class="px-4 py-2 rounded-md border border-border text-sm font-medium hover:bg-muted transition-colors"
+            class="w-full rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted sm:w-auto"
             @click="changePassword"
           >
             Passwort ändern
@@ -138,36 +174,40 @@
       <!-- WG-Einstellungen -->
       <div
         v-if="hasApartment"
-        class="rounded-xl border border-border bg-card p-6 w-full"
+        class="w-full rounded-xl border border-border bg-card p-4 sm:p-6"
       >
-        <div class="flex items-center gap-3 mb-6">
-          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/50">
+        <div class="mb-6 flex items-start gap-3">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/50">
             <Home class="h-5 w-5 text-primary" />
           </div>
-          <div>
+
+          <div class="min-w-0">
             <h2 class="text-lg font-semibold">WG-Einstellungen</h2>
             <p class="text-sm text-muted-foreground">
               Allgemeine WG-Informationen
             </p>
           </div>
         </div>
+
         <div class="space-y-4">
           <div class="space-y-2">
             <label class="text-sm font-medium">WG-Name</label>
             <input
               v-model="wg.name"
               :readonly="!isAdmin"
-              class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring"
+              class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
+
           <div class="space-y-2">
             <label class="text-sm font-medium">Adresse</label>
             <input
               v-model="wg.address"
               :readonly="!isAdmin"
-              class="w-full px-3 h-9 rounded-md border border-border bg-input text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+              class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
             />
           </div>
+
           <p
             v-if="!isAdmin"
             class="text-xs text-muted-foreground"
@@ -178,40 +218,47 @@
       </div>
 
       <!-- Benachrichtigungen -->
-      <div class="rounded-xl border border-border bg-card p-6 w-full">
-        <div class="flex items-center gap-3 mb-6">
-          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/20">
+      <div class="w-full rounded-xl border border-border bg-card p-4 sm:p-6">
+        <div class="mb-6 flex items-start gap-3">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-warning/20">
             <Bell class="h-5 w-5 text-warning-foreground" />
           </div>
-          <div>
+
+          <div class="min-w-0">
             <h2 class="text-lg font-semibold">Benachrichtigungen</h2>
             <p class="text-sm text-muted-foreground">
               Benachrichtigungseinstellungen verwalten
             </p>
           </div>
         </div>
+
         <div class="space-y-4 divide-y divide-border">
           <div
             v-for="item in notifItems"
             :key="item.key"
-            class="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+            class="flex flex-col gap-3 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
           >
-            <div>
-              <p class="font-medium">{{ item.label }}</p>
-              <p class="text-sm text-muted-foreground">{{ item.desc }}</p>
+            <div class="min-w-0">
+              <p class="font-medium">
+                {{ item.label }}
+              </p>
+              <p class="text-sm text-muted-foreground">
+                {{ item.desc }}
+              </p>
             </div>
+
             <button
               type="button"
               :class="[
                 'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors',
-                notifs[item.key] ? 'bg-primary' : 'bg-muted'
+                notifs[item.key] ? 'bg-primary' : 'bg-muted',
               ]"
               @click="notifs[item.key] = !notifs[item.key]"
             >
               <span
                 :class="[
                   'inline-block h-5 w-5 rounded-full bg-white shadow transition-transform',
-                  notifs[item.key] ? 'translate-x-5' : 'translate-x-0.5'
+                  notifs[item.key] ? 'translate-x-5' : 'translate-x-0.5',
                 ]"
               />
             </button>
@@ -219,43 +266,58 @@
         </div>
       </div>
 
-      <!-- Achtung / Save (bei großem Screen rechts, sonst unten) -->
-      <div class="flex flex-col gap-6 w-full">
-        <!-- Save -->
-        <div class="flex justify-end">
-          <div class="space-y-2 text-right">
+      <!-- Aktionen -->
+      <div class="flex w-full flex-col gap-4 sm:gap-6 xl:col-span-2">
+        <div class="rounded-xl border border-border bg-card p-4 sm:p-6">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 class="text-lg font-semibold">
+                Änderungen speichern
+              </h2>
+
+              <p class="mt-1 text-sm text-muted-foreground">
+                Speichere deine Profil- und Benachrichtigungseinstellungen.
+              </p>
+            </div>
+
             <button
               type="button"
-              class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:w-auto"
               @click="saveSettings"
             >
               <Save class="h-4 w-4" />
-              Änderungen speichern
+              Speichern
             </button>
           </div>
         </div>
 
-        <!-- Achtung -->
         <div
           v-if="hasApartment"
-          class="rounded-xl border border-red-200 bg-red-50 p-6 w-full"
+          class="rounded-xl border border-red-200 bg-card p-4 sm:p-6"
         >
-          <h2 class="text-lg font-semibold text-red-700">
-            Achtung!
-          </h2>
-          <p class="mt-1 text-sm text-red-600">
-            Du kannst die WG verlassen. Wenn du Admin bist, dann wird automatisch ein anderes Mitglied Admin.
-          </p>
-          <button
-            type="button"
-            class="mt-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
-            @click="showLeaveDialog = true"
-          >
-            WG verlassen
-          </button>
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 class="text-lg font-semibold text-red-700">
+                Gefahrenbereich
+              </h2>
+
+              <p class="mt-1 max-w-2xl text-sm text-muted-foreground">
+                Du kannst die WG verlassen. Wenn du Admin bist, wird automatisch ein anderes Mitglied Admin.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              class="inline-flex h-10 w-full items-center justify-center rounded-md border border-red-300 px-4 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 sm:w-auto"
+              @click="showLeaveDialog = true"
+            >
+              WG verlassen
+            </button>
+          </div>
         </div>
       </div>
     </div>
+
     <AppConfirmDialog
       v-model="showLeaveDialog"
       title="WG verlassen?"
@@ -270,14 +332,19 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { User, Lock, Home, Bell, Save } from 'lucide-vue-next'
+import {
+  User,
+  Lock,
+  Home,
+  Bell,
+  Save,
+} from 'lucide-vue-next'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AppConfirmDialog from '@/components/AppConfirmDialog.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 import { useMembersStore } from '@/stores/members'
 import { useNotificationsStore } from '@/stores/notifications'
-
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -286,8 +353,7 @@ const membersStore = useMembersStore()
 const notifications = useNotificationsStore()
 
 const showLeaveDialog = ref(false)
-
-const avatarInput = ref(null)
+//const avatarInput = ref(null)
 
 const avatarUrl = computed(() => {
   if (!authStore.currentUser?.avatar) {
@@ -313,7 +379,8 @@ const profile = reactive({
 
 const wg = reactive({
   name: '',
-  address: ''
+  address: '',
+  currency: 'EUR',
 })
 
 const passwordForm = reactive({
@@ -337,7 +404,7 @@ const notifItems = [
     key: 'task_reminders',
     label: 'Aufgaben-Erinnerungen',
     desc: 'Erinnerungen für anstehende Aufgaben',
-  }
+  },
 ]
 
 function loadProfileData() {
@@ -461,13 +528,11 @@ async function saveSettings() {
   try {
     profile.avatar = profile.name.charAt(0).toUpperCase()
 
-    // DB speichern
     await authStore.updateNotificationSettings({
       email_notifications: notifs.email_notifications,
       task_reminders: notifs.task_reminders,
     })
 
-    // UI aktualisieren
     authStore.currentUser.name = profile.name
     authStore.currentUser.email = profile.email
     authStore.currentUser.avatar = profile.avatar
@@ -484,9 +549,11 @@ async function saveSettings() {
   }
 }
 
+/*
 function openAvatarPicker() {
-  avatarInput.value.click()
+  avatarInput.value?.click()
 }
+
 async function deleteAvatar() {
   await authStore.deleteAvatar()
 }
@@ -502,4 +569,5 @@ async function handleAvatarChange(event) {
 
   event.target.value = ''
 }
+*/
 </script>
