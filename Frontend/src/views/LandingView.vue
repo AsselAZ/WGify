@@ -50,7 +50,7 @@
         </h1>
 
         <p class="mx-auto mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg md:text-xl">
-          WGify hilft dir und deinen Mitbewohnern, Ausgaben zu teilen, Aufgaben zu verwalten und das Zusammenleben zu vereinfachen.
+         <span class="text-primary">WG</span><span class="text-purple">ify</span> hilft dir und deinen Mitbewohnern, Ausgaben zu teilen, Aufgaben zu verwalten und das Zusammenleben zu vereinfachen.
         </p>
 
         <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
@@ -87,7 +87,7 @@
           </h2>
 
           <p class="mt-4 text-muted-foreground">
-            WGify bietet alle Funktionen, die du und deine Mitbewohner für ein harmonisches Zusammenleben braucht.
+            <span class="text-primary">WG</span><span class="text-purple">ify</span> bietet alle Funktionen, die du und deine Mitbewohner für ein harmonisches Zusammenleben braucht.
           </p>
         </div>
 
@@ -102,7 +102,7 @@
             </h3>
 
             <p class="text-muted-foreground">
-              Erfasse und teile alle WG-Ausgaben fair auf. Behalte den Überblick über wer wem was schuldet.
+              Erfasse alle WG-Ausgaben und behalte somit den Überblick darüber, wer was ausgegeben hat.
             </p>
           </div>
 
@@ -248,7 +248,7 @@
         />
 
         <p class="text-sm text-muted-foreground">
-          2024 WGify. Alle Rechte vorbehalten.
+          2026 WGify. Alle Rechte vorbehalten.
         </p>
       </div>
     </footer>

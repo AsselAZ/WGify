@@ -95,7 +95,7 @@
               <input
                 v-model="form.apartmentName"
                 type="text"
-                placeholder="z.B. WG Musterstraße"
+                placeholder="z.B. die Coole WG"
                 required
                 class="h-10 w-full rounded-md border border-border bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
