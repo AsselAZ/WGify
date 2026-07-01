@@ -28,16 +28,10 @@
             <div
               class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-2xl font-semibold text-primary-foreground"
             >
-              <img
-                v-if="avatarUrl"
-                :src="avatarUrl"
-                alt="Profilbild"
-                class="h-full w-full object-cover"
-              />
-
-              <span v-else>
+              <span>
                 {{ profile.avatar }}
               </span>
+
             </div>
           </div>
 
@@ -525,27 +519,50 @@ async function changePassword() {
 }
 
 async function saveSettings() {
+  profile.avatar = profile.name?.charAt(0).toUpperCase() || ''
+
   try {
-    profile.avatar = profile.name.charAt(0).toUpperCase()
+    let savedUser = authStore.currentUser
 
-    await authStore.updateNotificationSettings({
-      email_notifications: notifs.email_notifications,
-      task_reminders: notifs.task_reminders,
-    })
+    if (isAdmin.value) {
+      savedUser = await authStore.updateApartmentSettings({
+        name: wg.name.trim(),
+        address: wg.address.trim(),
+        currency: wg.currency || 'EUR',
+      })
+    }
 
-    authStore.currentUser.name = profile.name
-    authStore.currentUser.email = profile.email
-    authStore.currentUser.avatar = profile.avatar
+    if (savedUser) {
+      const finalUser = {
+        ...savedUser,
+        name: profile.name,
+        email: profile.email,
+        avatar: savedUser.avatar ?? profile.avatar,
+      }
+
+      authStore.currentUser = finalUser
+      localStorage.setItem('currentUser', JSON.stringify(finalUser))
+
+      loadProfileData()
+      loadApartmentData()
+    }
 
     localStorage.setItem(
-      'currentUser',
-      JSON.stringify(authStore.currentUser)
+      'settings',
+      JSON.stringify({
+        notifs,
+      })
     )
 
-    toast.success('Einstellungen gespeichert')
+    toast.success(
+      'Einstellungen gespeichert',
+      'WG-Name und Adresse wurden erfolgreich gespeichert.'
+    )
   } catch (error) {
-    console.error(error)
-    toast.error(error.response?.data?.message || 'Fehler beim Speichern')
+    toast.error(
+      'Speichern fehlgeschlagen',
+      error.response?.data?.message || 'WG-Daten konnten nicht gespeichert werden.'
+    )
   }
 }
 
